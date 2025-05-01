@@ -1,0 +1,1102 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>scene2_storytelling</title>
+    <script src="https://unpkg.com/scrollama"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.4.0/p5.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Cookie&display=swap" rel="stylesheet">
+    <!-- Add Manrope Font -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@300;400;500;600&display=swap" rel="stylesheet">
+    
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Manrope', sans-serif;
+            line-height: 1.6;
+            background-color: #020c1a; /* Slightly darker background */
+            overflow-x: hidden;
+        }
+
+        .fixed-image {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 3;  /* 1.1.png在粒子画布之上 */
+            pointer-events: none;
+            padding-top: 2vh;
+        }
+
+        .comic-image {
+            max-width: 53%;
+            height: auto;
+            object-fit: contain;
+        }
+
+        #p5-canvas {
+            position: fixed;
+            top: 0;
+            left: 0;
+            z-index: 1;  /* p5js画布在背景之上 */
+            pointer-events: none;
+            opacity: 0;
+            transition: opacity 0.5s ease;
+        }
+
+        #particle-canvas {
+            position: fixed;
+            top: 0;
+            left: 0;
+            z-index: 2;  /* 粒子画布在p5js画布之上 */
+            pointer-events: none;
+            opacity: 0;
+            transition: opacity 0.5s ease;
+        }
+
+        .scroll-container {
+            position: relative;
+            width: 100%;
+            height: 100vh;
+            z-index: 4;  /* 滚动容器在1.1.png之上 */
+        }
+
+        .scroll-section {
+            position: relative;
+            width: 100%;
+            height: 110vh;
+            z-index: 9999;  /* 提高滚动区域的层级 */
+        }
+
+        /* 第四页单独设置高度 */
+        .scroll-section:nth-child(4) {
+            height: 100vh;
+        }
+
+        .step {
+            position: relative;
+            width: 100%;
+            height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 2rem;
+            z-index: 9999;  /* 提高步骤容器的层级 */
+        }
+
+        .content-box {
+            padding: 2rem;
+            border-radius: 8px;
+            max-width: 100%;
+            text-align: center;
+            opacity: 0;
+            transform: translateY(20px);
+            transition: opacity 0.5s ease, transform 0.5s ease;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .content-box.active {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        .text-content {
+            color: #FFF8DC; /* cornsilk */
+            font-size: 18px;
+            line-height: 1.8;
+            text-align: center;
+            width: 45vw;
+            min-width: 300px;
+            max-width: 800px;
+            margin: 0 auto;
+            position: relative;
+            top: auto;
+            left: auto;
+            transform: none;
+            z-index: 9999;  /* 提高层级到最高 */
+            opacity: 0;
+            transition: opacity 0.5s ease;
+            padding: 5px;
+            box-sizing: border-box;
+            background: rgba(0, 0, 0, 0.4);
+            backdrop-filter: blur(6px);
+            border-radius: 12px;
+            box-shadow: 0 0 20px rgba(0, 0, 0, 0.2);
+            font-family: 'Manrope', sans-serif;
+        }
+
+        /* 为第四页的文字添加特殊样式 */
+        .scroll-section:nth-child(4) .text-content {
+            top: 45vh;
+            position: relative;
+            z-index: 10;
+            width: 45vw;
+            min-width: 300px;
+            max-width: 800px;
+        }
+
+        .text-content.active {
+            opacity: 1;
+        }
+
+        .text-content p {
+            margin-bottom: 20px;
+            word-wrap: break-word;
+            white-space: normal;
+            display: block;
+            font-family: 'Manrope', sans-serif;
+            font-size: 18px;
+        }
+
+        .scroll-hint {
+            position: fixed;
+            top: 20px;
+            left: 0;
+            right: 0;
+            margin: 0 auto;
+            width: max-content; /* 根据内容设置宽度 */
+            color: #FFDADA; /* 保持原有颜色 */
+            font-size: 18px;
+            font-weight: bold;
+            opacity: 1; /* 始终显示 */
+            z-index: 1001; /* Above header */
+            background: rgba(46, 58, 103, 0.85); /* 保持原有背景色 */
+            padding: 8px 15px;
+            border-radius: 25px;
+            box-shadow: 0 2px 8px rgba(255, 218, 218, 0.3); /* 柔和的阴影 */
+            pointer-events: none; /* Prevent interaction */
+            border: 2px solid rgba(255, 218, 218, 0.5); /* 添加边框 */
+            text-align: center; /* 文本居中 */
+            animation: floatUpDown 1.5s ease-in-out infinite; /* 添加浮动动画 */
+            font-family: 'Manrope', sans-serif;
+        }
+
+        .scroll-hint.active {
+            opacity: 1;
+        }
+        
+        /* 添加浮动动画关键帧 */
+        @keyframes floatUpDown {
+            0%, 100% {
+                transform: translateY(0);
+            }
+            50% {
+                transform: translateY(-5px); /* 向上浮动5px */
+            }
+        }
+
+        #page4-images {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 3;
+            pointer-events: none;
+        }
+
+        #page4-images img {
+            position: absolute;
+            max-width: 45%;
+            height: auto;
+            object-fit: contain;
+            top: 40%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            opacity: 0;
+            transition: opacity 0.5s ease;
+        }
+
+        
+
+        #page4-images img.active {
+            opacity: 1;
+        }
+
+        .react-button {
+            position: fixed;
+            bottom: 23%; 
+            left: 50%;
+            transform: translateX(-50%);
+            padding: 15px 30px;
+            background: linear-gradient(45deg, #ff00ff, #00ffff);
+            color: white;
+            border: none;
+            border-radius: 25px;
+            font-size: 18px;
+            font-weight: bold;
+            cursor: pointer;
+            opacity: 0;
+            transition: opacity 0.5s ease;
+            z-index: 5;
+            box-shadow: 0 0 20px rgba(255, 0, 255, 0.5);
+            font-family: 'Manrope', sans-serif;
+        }
+
+        .react-button.active {
+            opacity: 1;
+        }
+
+        .react-button:hover {
+            transform: translateX(-50%) scale(1.05);
+            box-shadow: 0 0 30px rgba(255, 0, 255, 0.8);
+        }
+
+        .black-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: black;
+            opacity: 0;
+            z-index: 9999;
+            pointer-events: none;
+            transition: opacity 1s ease;
+        }
+
+        .black-overlay.active {
+            opacity: 1;
+            pointer-events: auto;
+        }
+
+        /* 添加标题栏样式 */
+        .story-title-header {
+            position: fixed;
+            top: 20px;
+            left: 20px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            color: #fff;
+            z-index: 10;
+            opacity: 1;
+        }
+
+        .title-text {
+            font-family: 'Cookie', cursive;
+            font-size: 32px;
+            padding: 10px 20px;
+            background: #2E3A67;
+            border-radius: 10px;
+            height: 60px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #FFDADA;
+        }
+
+        .header-user-info {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 10px 20px;
+            background: #2E3A67;
+            border-radius: 10px;
+            height: 60px;
+        }
+
+        .header-user-details {
+            color: #FFDADA;
+            font-family: 'Manrope', sans-serif;
+        }
+
+        .header-username {
+            font-weight: 600;
+            font-size: 14px;
+        }
+
+        .header-story-time {
+            font-size: 12px;
+            opacity: 0.8;
+        }
+
+        /* Tooltip Styles */
+        .username-tooltip {
+            position: absolute;
+            top: 0;
+            left: 0;
+            background-color: rgba(50, 50, 50, 0.85); /* Softer dark background */
+            color: #fff;
+            padding: 4px 8px; /* Smaller padding */
+            border-radius: 4px; /* Slightly smaller radius */
+            font-size: 0.8rem; /* Smaller font size */
+            z-index: 1002;
+            display: none;
+            white-space: nowrap; /* Prevent line breaks */
+            box-shadow: 0 1px 3px rgba(0,0,0,0.2); /* Subtle shadow */
+            font-family: 'Manrope', sans-serif;
+        }
+    </style>
+</head>
+<body>
+    <!-- Tooltip Element (Initially Hidden) -->
+    <div id="username-tooltip" class="username-tooltip"></div>
+    
+    <div class="story-title-header">
+        <div class="title-text">Scene2: Replying</div>
+        <div class="header-user-info">
+            <div class="header-user-details">
+                <div class="header-username">she.was.online</div>
+                <div class="header-story-time">3 months ago</div>
+            </div>
+        </div>
+    </div>
+    <div class="black-overlay"></div>
+    <div class="scroll-hint">↓ Scroll through the story to begin the interaction ↓</div>
+    <div id="p5-canvas"></div>
+    <div id="particle-canvas"></div>
+    <button class="react-button">It's time to react</button>
+    <div class="fixed-image">
+        <img src="./scene2/assets/1.1.webp" alt="固定图片" class="comic-image" id="main-image">
+    </div>
+    <div class="fixed-image" id="page4-images" style="display: none;">
+        <img src="./scene2/assets/3.1.webp" alt="图片1" class="comic-image">
+        <img src="./scene2/assets/3.2.webp" alt="图片2" class="comic-image">
+        <img src="./scene2/assets/3.3.webp" alt="图片3" class="comic-image">
+    </div>
+    <div class="scroll-container">
+        <!-- 第一页 -->
+        <div class="scroll-section">
+            <div class="step">
+                <div class="content-box">
+                    <div class="text-content">
+                        <p>As a self-branding creator,</p>
+                    </p>  I manage my social media account and plan what to post.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 第二页 -->
+        <div class="scroll-section">
+            <div class="step">
+                <div class="content-box">
+                    <div class="text-content">
+                        <p>Slowly, people start to notice.</p>
+                        <p>It feels good to be seen.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 第三页 -->
+        <div class="scroll-section">
+            <div class="step">
+                <div class="content-box">
+                    <div class="text-content">
+                        <p>But being seen also comes with expectations — to perform and respond.</p>
+                        <p>Interacting with followers never really stops.</p>
+                        <p>Being online has become a part of me.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 第四页 -->
+        <div class="scroll-section">
+            <div class="step">
+                <div class="content-box">
+                    <div class="text-content">
+                        <p>Tonight, like always,<p>
+                        </p>I sit back in front of the screen.</p>
+                        <p>One more comment. One more reply.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+   
+    <script>
+        
+        // 粒子效果代码
+        let particleSketch = function(p) {
+            let img;
+            let particles = [];
+            let particleSize = 4;
+            let particleSpacing = 8;
+            let mouseRadius = 100;
+            let imageScale = 0.61;
+            let isActive = false;
+            let fadeInOpacity = 0; // 添加淡入透明度控制
+
+            p.preload = function() {
+                img = p.loadImage('scene2/assets/1.1.webp', 
+                    function() {
+                        console.log('图片加载成功');
+                        console.log('图片尺寸:', img.width, img.height);
+                    },
+                    function() {
+                        console.error('图片加载失败');
+                    }
+                );
+            };
+
+            p.setup = function() {
+                const canvas = p.createCanvas(p.windowWidth, p.windowHeight);
+                canvas.parent('particle-canvas');
+                p.noStroke();
+                p.frameRate(30); // 限制帧率为30fps
+                
+                // 确保图片已加载
+                if (img) {
+                    img.loadPixels();
+                    console.log('图片像素数据已加载');
+                    
+                    // 计算图片在画布中的位置
+                    let scaledWidth = img.width * imageScale;
+                    let scaledHeight = img.height * imageScale;
+                    let startX = (p.width - scaledWidth) / 2;
+                    let startY = (p.height - scaledHeight) / 2;
+                    
+                    // 创建粒子
+                    for (let y = 0; y < img.height; y += particleSpacing) {
+                        for (let x = 0; x < img.width; x += particleSpacing) {
+                            let index = (x + y * img.width) * 4;
+                            let pixel = img.pixels[index];
+                            
+                            // 如果像素不是透明的，创建粒子
+                            if (pixel > 0) {
+                                particles.push({
+                                    x: startX + x * imageScale,
+                                    y: startY + y * imageScale,
+                                    originalX: startX + x * imageScale,
+                                    originalY: startY + y * imageScale,
+                                    color: p.color(img.pixels[index], img.pixels[index + 1], img.pixels[index + 2]),
+                                    size: particleSize,
+                                    // 添加相对位置信息
+                                    relativeX: x * imageScale,
+                                    relativeY: y * imageScale
+                                });
+                            }
+                        }
+                    }
+                    console.log('粒子数量:', particles.length);
+                }
+            };
+
+            p.draw = function() {
+                p.background(0, 0);
+                
+                if (particles.length > 0 && isActive) {
+                    const targetColor = p.color(200, 150, 255);
+                    const blendAmount = 0.15;
+                    
+                    // 更新淡入透明度
+                    if (fadeInOpacity < 255) {
+                        fadeInOpacity += 5;
+                    }
+                    
+                    particles.forEach(particle => {
+                        let d = p.dist(p.mouseX, p.mouseY, particle.x, particle.y);
+                        
+                        if (d < mouseRadius) {
+                            let angle = p.atan2(particle.y - p.mouseY, particle.x - p.mouseX);
+                            let force = (mouseRadius - d) / mouseRadius;
+                            particle.x += p.cos(angle) * force * 2.5;
+                            particle.y += p.sin(angle) * force * 2.5;
+                        }
+                        
+                        let distanceToOriginal = p.dist(particle.x, particle.y, particle.originalX, particle.originalY);
+                        let returnSpeed = p.map(distanceToOriginal, 0, 200, 0.08, 0.25);
+                        
+                        particle.x += (particle.originalX - particle.x) * returnSpeed;
+                        particle.y += (particle.originalY - particle.y) * returnSpeed;
+                        
+                        let blendedColor = p.lerpColor(particle.color, targetColor, blendAmount);
+                        p.fill(blendedColor.levels[0], blendedColor.levels[1], blendedColor.levels[2], fadeInOpacity);
+                        p.ellipse(particle.x, particle.y, particle.size);
+                    });
+                }
+            };
+
+            // 修改激活/禁用方法
+            window.activateParticles = function() {
+                isActive = true;
+                fadeInOpacity = 0; // 重置淡入透明度
+            };
+
+            window.deactivateParticles = function() {
+                isActive = false;
+                fadeInOpacity = 0; // 重置淡入透明度
+                particles.forEach(particle => {
+                    particle.x = particle.originalX;
+                    particle.y = particle.originalY;
+                });
+            };
+
+            p.windowResized = function() {
+                p.resizeCanvas(p.windowWidth, p.windowHeight);
+                
+                // 重新计算图片在画布中的位置
+                let scaledWidth = img.width * imageScale;
+                let scaledHeight = img.height * imageScale;
+                let startX = (p.width - scaledWidth) / 2;
+                let startY = (p.height - scaledHeight) / 2;
+                
+                // 更新所有粒子的位置
+                particles.forEach(particle => {
+                    particle.originalX = startX + particle.relativeX;
+                    particle.originalY = startY + particle.relativeY;
+                    particle.x = particle.originalX;
+                    particle.y = particle.originalY;
+                });
+            };
+        };
+
+        // 创建新的 p5 实例
+        new p5(particleSketch);
+
+        // 原有的 P5.js 代码
+        let bubbles = [];
+        let hexagons = [];  // 添加六边形数组
+        const numBubbles = 50;  // 第三页的气泡数量 - 这个值当前未使用，因为第三页现在是六边形
+        const numBubblesPage2 = 18;  // 第二页的气泡数量改为18个
+        let currentPage = 0; // 0: 第一页, 1: 第二页, 2: 第三页, 3: 第四页
+        let letters = [];
+        const alphabet = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
+        let transitionOpacity = 255;  // 添加过渡透明度
+        let fadeInterval = null;  // 添加淡入动画的定时器变量
+        let hasShownPage4 = false; // 添加页面4显示锁
+        let buttonTimeoutId = null; // 用于存储按钮显示的 setTimeout ID
+
+        // 在 setup() 函数之前添加 Hexagon 类
+        class Hexagon {
+            constructor(x, y, r) {
+                this.x = x;
+                this.y = y;
+                this.r = r;
+                this.speed = random(0.2, 1);
+                // 使用更深的色调
+                this.col = color(
+                    random(100, 160),  // R
+                    random(160, 200),  // G
+                    random(200, 240),  // B
+                    150               // alpha：增加一点透明度，视觉柔和
+                );
+            }
+
+            move() {
+                this.y -= this.speed;
+                if (this.y < -this.r) this.y = height + this.r;
+            }
+
+            display(overrideColor = null) {
+                // Determine the color to use
+                let displayColor = overrideColor ? overrideColor : this.col;
+
+                // 绘制发光效果
+                for (let i = 0; i < 3; i++) {
+                    let glowSize = this.r * (1 + i * 0.2);
+                    let glowAlpha = map(i, 0, 2, 80, 15);  // 降低发光的透明度
+                    // Use displayColor for glow
+                    fill(red(displayColor), green(displayColor), blue(displayColor), glowAlpha);
+                    beginShape();
+                    for (let j = 0; j < 6; j++) {
+                        let angle = TWO_PI / 6 * j;
+                        let vx = this.x + cos(angle) * glowSize;
+                        let vy = this.y + sin(angle) * glowSize;
+                        vertex(vx, vy);
+                    }
+                    endShape(CLOSE);
+                }
+
+                // 绘制主体六边形
+                // Use displayColor for main hexagon, keep alpha high for visibility
+                fill(red(displayColor), green(displayColor), blue(displayColor), overrideColor ? alpha(displayColor) : 220);
+                beginShape();
+                for (let i = 0; i < 6; i++) {
+                    let angle = TWO_PI / 6 * i;
+                    let vx = this.x + cos(angle) * this.r;
+                    let vy = this.y + sin(angle) * this.r;
+                    vertex(vx, vy);
+                }
+                endShape(CLOSE);
+            }
+        }
+
+        // 添加异步图片显示函数
+        async function revealImagesSequentially(images) {
+            // Clear any previous button timeout
+            if (buttonTimeoutId) {
+                clearTimeout(buttonTimeoutId);
+                buttonTimeoutId = null;
+            }
+
+            // 第一张图片立即显示
+            if (images.length > 0) images[0].classList.add('active');
+            
+            // 第二张图片延迟1000ms显示
+            if (images.length > 1) {
+                await new Promise(resolve => setTimeout(resolve, 1000));
+                images[1].classList.add('active');
+            }
+            
+            // 第三张图片延迟1500ms显示
+            if (images.length > 2) {
+                await new Promise(resolve => setTimeout(resolve, 1500));
+                images[2].classList.add('active');
+            }
+            
+            // 所有图片显示完成后，延迟1000ms显示按钮
+            buttonTimeoutId = setTimeout(() => {
+                // Defensive check: Only show button if still on page 4
+                if (currentPage === 3) {
+                    const button = document.querySelector('.react-button');
+                    button.classList.add('active');
+                    // 添加点击事件监听
+                    button.addEventListener('click', () => {
+                        const overlay = document.querySelector('.black-overlay');
+                        overlay.classList.add('active');
+                        // 等待黑屏过渡效果完成后跳转
+                        setTimeout(() => {
+                            window.location.href = 'scene2/Interaction.html';
+                        }, 1000);
+                    });
+                }
+                buttonTimeoutId = null; // Clear ID after execution
+            }, 1000);
+        }
+
+        // 修改 setup() 函数中的六边形创建部分
+        function setup() {
+            const canvas = createCanvas(windowWidth, windowHeight);
+            canvas.parent('p5-canvas');
+            textFont('Manrope');
+            noStroke();
+            frameRate(30); // 限制帧率为30fps
+            
+            // 创建气泡
+            for (let i = 0; i < numBubbles; i++) {
+                bubbles.push({
+                    x: random(width),
+                    y: random(height),
+                    size: random(60, 130),  // 气泡大小范围是60到130
+                    speedX: random(-0.2, 0.2),
+                    speedY: random(-0.2, 0.2),
+                    color: color(0, 150, 255, 60)
+                });
+            }
+
+            // 创建六边形
+            for (let i = 0; i < 20; i++) {
+                hexagons.push(new Hexagon(random(width), random(height), random(20, 50)));
+            }
+
+            // 创建飘动的字母
+            for (let i = 0; i < 30; i++) {
+                letters.push({
+                    char: alphabet.charAt(floor(random(alphabet.length))),
+                    x: random(width),
+                    y: random(height),
+                    speedX: random(-0.8, 0.8),
+                    speedY: random(-0.8, 0.8),
+                    size: random(10, 30),
+                    rotation: random(TWO_PI),
+                    rotationSpeed: random(-0.02, 0.02),
+                    opacity: 200
+                });
+            }
+        }
+
+        function drawBubbles() {
+            bubbles.forEach(bubble => {
+                bubble.x += bubble.speedX;
+                bubble.y += bubble.speedY;
+
+                if (bubble.x < 0 || bubble.x > width) bubble.speedX *= -1;
+                if (bubble.y < 0 || bubble.y > height) bubble.speedY *= -1;
+
+                // 绘制主气泡
+                let baseColor = color(red(bubble.color), green(bubble.color), blue(bubble.color));
+                let highlight = color(180, 200, 255);
+                let final = lerpColor(baseColor, highlight, 0.2);
+                fill(final.levels[0], final.levels[1], final.levels[2], alpha(bubble.color));
+                ellipse(bubble.x, bubble.y, bubble.size, bubble.size);
+            });
+        }
+
+        function drawLetters() {
+            letters.forEach(letter => {
+                letter.x += letter.speedX;
+                letter.y += letter.speedY;
+                letter.rotation += letter.rotationSpeed;
+
+                if (letter.x < 0) letter.x = width;
+                if (letter.x > width) letter.x = 0;
+                if (letter.y < 0) letter.y = height;
+                if (letter.y > height) letter.y = 0;
+
+                push();
+                translate(letter.x, letter.y);
+                rotate(letter.rotation);
+                
+                // 计算鼠标与字符的距离
+                let d = dist(mouseX, mouseY, letter.x, letter.y);
+                let size = letter.size;
+                let gradient;
+                
+                // 如果鼠标在字符附近（距离小于100像素）
+                if (d < 100) {
+                    // 根据距离计算放大的比例
+                    let scale = map(d, 0, 100, 2.2, 1.5);  // 最大放大倍数从2改为2.2
+                    size *= scale;
+                    
+                    // 创建新的渐变效果
+                    gradient = drawingContext.createLinearGradient(
+                        -size/2, -size/2,
+                        size/2, size/2
+                    );
+                           gradient.addColorStop(0, 'rgb(255, 0, 128)');    // 粉色
+                    gradient.addColorStop(1, 'rgb(128, 0, 255)');    // 紫色
+       
+                    
+                } else {
+                    // 保持原有的渐变效果
+                    gradient = drawingContext.createLinearGradient(
+                        -size/2, -size/2,
+                        size/2, size/2
+                    );
+
+                                 gradient.addColorStop(1, 'rgb(255, 255, 0)');    // 黄色
+                    gradient.addColorStop(0, 'rgb(255, 0, 128)');    // 粉色
+             
+                }
+                
+                drawingContext.fillStyle = gradient;
+                textSize(size);
+                textAlign(CENTER, CENTER);
+                text(letter.char, 0, 0);
+                pop();
+            });
+        }
+
+        function draw() {
+            // Use new background color #020c1a (RGB: 2, 12, 26)
+            background(2, 12, 26, transitionOpacity);  // Apply fade to background as well
+            noStroke();
+
+            if (currentPage === 1) {
+                // Second page: Bubbles with specific colors and fade
+                bubbles.forEach((bubble, index) => {
+                    if (index < numBubblesPage2) {
+                        bubble.x += bubble.speedX;
+                        bubble.y += bubble.speedY;
+
+                        if (bubble.x < 0 || bubble.x > width) bubble.speedX *= -1;
+                        if (bubble.y < 0 || bubble.y > height) bubble.speedY *= -1;
+
+                        if (index % 3 === 0) {
+                            bubble.color = color(255, 160, 180, transitionOpacity * 0.35);
+                        } else if (index % 3 === 1) {
+                            bubble.color = color(255, 205, 115, transitionOpacity * 0.35);
+                        } else {
+                            bubble.color = color(202, 158, 180, transitionOpacity * 0.35);
+                        }
+
+                        for (let i = 0; i < 3; i++) {
+                            let glowSize = bubble.size * (1 + i * 0.2);
+                            let glowOpacity = transitionOpacity * 0.1 * (1 - i * 0.3);
+                            fill(red(bubble.color), green(bubble.color), blue(bubble.color), glowOpacity);
+                            ellipse(bubble.x, bubble.y, glowSize, glowSize);
+                        }
+
+                        let baseColor = color(red(bubble.color), green(bubble.color), blue(bubble.color));
+                        let highlight = color(180, 200, 255);
+                        let final = lerpColor(baseColor, highlight, 0.2);
+                        fill(final.levels[0], final.levels[1], final.levels[2], alpha(bubble.color));
+                        ellipse(bubble.x, bubble.y, bubble.size, bubble.size);
+                    }
+                });
+            } else if (currentPage === 2) {
+                // Third page: Hexagons (original color) + Letters, with fade
+                background(10, 10, 30, transitionOpacity * 0.06); // Keeping the dark overlay effect for page 3 for now
+                // OR: background(2, 12, 26, transitionOpacity * 0.8); // Option using new base color
+                for (let h of hexagons) {
+                    h.move();
+                    h.display(); // Use original color
+                }
+                // Apply fade to letters as well
+                push();
+                drawingContext.globalAlpha = transitionOpacity / 255;
+                drawLetters();
+                pop();
+            } else if (currentPage === 3) {
+                // Fourth page: Hexagons with blue colors
+                // Use solid new background color for page 4
+                background(2, 12, 26); 
+                hexagons.forEach((h, index) => {
+                    h.move();
+                    let blueColor;
+                    if (index % 2 === 0) {
+                        blueColor = color(60, 100, 200, 100); // Deep blue, even more transparent
+                    } else {
+                        blueColor = color(100, 150, 255, 100); // Light blue, even more transparent
+                    }
+                    h.display(blueColor); // Override with blue color
+                });
+            }
+        }
+
+        function windowResized() {
+            resizeCanvas(windowWidth, windowHeight);
+            // 重新计算字母位置
+            letters.forEach(letter => {
+                letter.x = random(width);
+                letter.y = random(height);
+            });
+            
+            // 重新计算气泡位置
+            bubbles.forEach(bubble => {
+                bubble.x = random(width);
+                bubble.y = random(height);
+            });
+
+            // 重新计算六边形位置
+            hexagons.forEach(hexagon => {
+                hexagon.x = random(width);
+                hexagon.y = random(height);
+            });
+        }
+
+        // 添加淡入动画函数 - 注释掉或直接返回
+        function fadeInTransition(callback) {
+            // 直接设置不透明度为255，并立即调用回调函数
+            transitionOpacity = 255;
+            if (callback) callback();
+            
+            // 原代码注释掉
+            /*
+            if (fadeInterval) clearInterval(fadeInterval);  // 清除之前的定时器
+            transitionOpacity = 0;
+            fadeInterval = setInterval(() => {
+                transitionOpacity += 5;
+                if (transitionOpacity >= 255) {
+                    transitionOpacity = 255; // Clamp to 255
+                    clearInterval(fadeInterval);
+                    fadeInterval = null;  // 清除定时器引用
+                    if (callback) callback();
+                }
+            }, 20);
+            */
+        }
+
+        // Scrollama 代码
+        document.addEventListener('DOMContentLoaded', () => {
+            const scroller = scrollama();
+            const canvas = document.getElementById('p5-canvas');
+            const particleCanvas = document.getElementById('particle-canvas');
+            const textContents = document.querySelectorAll('.text-content');
+            const scrollHint = document.querySelector('.scroll-hint');
+
+            // 添加滚动事件监听器检测最后一页底部
+            window.addEventListener('scroll', () => {
+                if (currentPage === 3) { // 如果是最后一页
+                    // 检查是否滚动到底部
+                    const scrollPosition = window.scrollY + window.innerHeight;
+                    const documentHeight = document.documentElement.scrollHeight;
+                    
+                    if (scrollPosition >= documentHeight - 100) { // 接近底部时
+                        scrollHint.style.opacity = '0'; // 隐藏滚动提示
+                    } else {
+                        scrollHint.style.opacity = '1'; // 否则显示
+                    }
+                }
+            });
+
+            scroller
+                .setup({
+                    step: '.step',
+                    offset: 0.6,
+                    debug: false
+                })
+                .onStepEnter(response => {
+                    const contentBox = response.element.querySelector('.content-box');
+                    if (contentBox) {
+                        contentBox.classList.add('active');
+                    }
+                    
+                    textContents.forEach(text => {
+                        text.classList.remove('active');
+                    });
+                    
+                    const currentText = response.element.querySelector('.text-content');
+                    if (currentText) {
+                        currentText.classList.add('active');
+                    }
+                    
+                    // 控制提示的显示
+                    if (response.index < 3) {
+                        // 不是最后一页，显示提示
+                        scrollHint.style.opacity = '1';
+                    } else {
+                        // 最后一页，检查滚动位置
+                        const scrollPosition = window.scrollY + window.innerHeight;
+                        const documentHeight = document.documentElement.scrollHeight;
+                        
+                        if (scrollPosition >= documentHeight - 100) {
+                            // 已经到底部，隐藏提示
+                            scrollHint.style.opacity = '0';
+                        } else {
+                            // 还没到底部，显示提示
+                            scrollHint.style.opacity = '1';
+                        }
+                    }
+                    
+                    currentPage = response.index;
+                    
+                    const fixedImage = document.querySelector('.fixed-image');
+                    const page4Images = document.getElementById('page4-images');
+                    const storyTitleHeader = document.querySelector('.story-title-header');
+                    
+                    // 根据当前页面索引设置显示内容
+                    switch(response.index) {
+                        case 0: // 第一页
+                            fixedImage.style.opacity = '1';
+                            page4Images.style.display = 'none';
+                            particleCanvas.style.opacity = '0';
+                            canvas.style.opacity = '0';
+                            window.deactivateParticles();
+                            document.querySelector('.react-button').classList.remove('active');
+                            // 在第一页显示标题栏
+                            storyTitleHeader.style.opacity = '1';
+                            break;
+                            
+                        case 1: // 第二页 - Bubbles fade in
+                            fixedImage.style.opacity = '1';
+                            page4Images.style.display = 'none';
+                            particleCanvas.style.opacity = '0';
+                            canvas.style.opacity = '1';
+                            window.deactivateParticles();
+                            document.querySelector('.react-button').classList.remove('active');
+                            // fadeInTransition(); // 移除淡入效果调用
+                            transitionOpacity = 255; // 直接设置为完全不透明
+                            // 从第二页开始隐藏标题栏
+                            storyTitleHeader.style.opacity = '0';
+                            break;
+                            
+                        case 2: // 第三页 - Hexagons (original) + Particles fade in
+                            fixedImage.style.opacity = '0';
+                            page4Images.style.display = 'none';
+                            particleCanvas.style.opacity = '1';
+                            canvas.style.opacity = '1';
+                            window.activateParticles();
+                            document.querySelector('.react-button').classList.remove('active');
+                            // fadeInTransition(); // 移除淡入效果调用
+                            transitionOpacity = 255; // 直接设置为完全不透明
+                            // 保持标题栏隐藏
+                            storyTitleHeader.style.opacity = '0';
+                            break;
+                            
+                        case 3: // 第四页 - Hexagons (blue) shown instantly, Particles off
+                            fixedImage.style.opacity = '0';
+                            page4Images.style.display = 'flex';
+                            particleCanvas.style.opacity = '0';
+                            canvas.style.opacity = '1'; // Ensure canvas is visible
+                            window.deactivateParticles();
+                            transitionOpacity = 255; // Ensure no fade effect from previous step
+                            // 保持标题栏隐藏
+                            storyTitleHeader.style.opacity = '0';
+                            
+                            if (!hasShownPage4) {
+                                hasShownPage4 = true;
+                                // Reveal images after a short delay for hexagons to appear
+                                setTimeout(() => {
+                                    revealImagesSequentially(page4Images.querySelectorAll('img'));
+                                }, 100); 
+                            }
+                            break;
+                    }
+                })
+                .onStepExit(response => {
+                    const contentBox = response.element.querySelector('.content-box');
+                    if (contentBox) {
+                        contentBox.classList.remove('active');
+                    }
+                    
+                    const currentText = response.element.querySelector('.text-content');
+                    if (currentText) {
+                        currentText.classList.remove('active');
+                    }
+                    
+                    // Always try to hide button when exiting any step except step 4 entry
+                    const button = document.querySelector('.react-button');
+                    if (button) {
+                         button.classList.remove('active');
+                    }
+
+                    // Clear pending button timeout if exiting step 4
+                    if (response.index === 3) {
+                         if (buttonTimeoutId) {
+                             clearTimeout(buttonTimeoutId);
+                             buttonTimeoutId = null;
+                         }
+                         // Reset page 4 specific state
+                         const images = document.querySelectorAll('#page4-images img');
+                         images.forEach(img => {
+                             img.classList.remove('active');
+                         });
+                         hasShownPage4 = false;
+                    }
+
+                    // Keep canvas visible when exiting steps 1, 2, 3
+                    const canvas = document.getElementById('p5-canvas');
+                    if (response.index !== 0 && canvas) {
+                        canvas.style.opacity = '1';
+                    }
+                });
+
+            window.addEventListener('resize', scroller.resize);
+        });
+    </script>
+    
+    <script>
+        // Tooltip Logic
+        document.addEventListener('DOMContentLoaded', () => {
+            const userInfoContainer = document.querySelector('.header-user-info'); // Target the container
+            const tooltipElement = document.getElementById('username-tooltip');
+
+            if (userInfoContainer && tooltipElement) { 
+                userInfoContainer.addEventListener('mouseenter', (event) => { 
+                    const rect = userInfoContainer.getBoundingClientRect(); // Get container's rect
+                    const tooltipText = "You're revisiting a memory from she.was.online — from 3 months ago.";
+                    
+                    tooltipElement.innerHTML = tooltipText;
+                    tooltipElement.style.display = 'block'; // Show first to measure width
+                    
+                    // Get tooltip dimensions AFTER displaying it
+                    const tooltipRect = tooltipElement.getBoundingClientRect();
+
+                    // Position tooltip centered below the container
+                    tooltipElement.style.top = `${rect.bottom + window.scrollY + 5}px`; 
+                    // Calculate centered left position based on container
+                    tooltipElement.style.left = `${rect.left + window.scrollX + (rect.width / 2) - (tooltipRect.width / 2)}px`; 
+                });
+
+                userInfoContainer.addEventListener('mouseleave', () => { 
+                    tooltipElement.style.display = 'none';
+                });
+            }
+        });
+    </script>
+</body>
+</html> 

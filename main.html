@@ -1,0 +1,1230 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Self-Branded</title>
+    <link rel="icon" type="image/webp" href="./homepage_assets/favicon.webp">
+    <!-- 添加Manrope字体 -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@300;400;500;600&display=swap" rel="stylesheet">
+    <style>
+        html, body {
+            width: 100%;
+            height: 100%;
+            margin: 0;
+            padding: 0;
+            font-family: 'Manrope', sans-serif; /* 使用Manrope字体 */
+            overflow: hidden; /* 防止滚动 */
+            height: 100vh; /* 固定视口高度 */
+            position: fixed; /* 固定位置 */
+        }
+
+        body {
+            height: 100vh;  /* 确保背景图片覆盖整个视口 */
+            overflow: hidden;
+            display: flex;
+            background: white; /* Changed from #091830 */
+            background-size: cover;
+            background-position: center;
+            background-repeat: no-repeat;
+            background-attachment: fixed;
+        }
+
+        .nav-sidebar {
+            width: 15vw; /* Changed back from auto */
+            height: 100vh; /* Changed back from auto */
+            padding: 4vw 4vw; /* Changed back from 2vw 4vw */
+            display: flex;
+            flex-direction: column; /* Changed back from row */
+            gap: 8px;
+            position: fixed;
+            left: 0;
+            top: 0; /* Changed back from bottom: 0 */
+            z-index: 1000;
+        }
+
+        .nav-item {
+            position: relative;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            text-decoration: none;
+            color: white;
+            font-family: 'Manrope', sans-serif; /* 使用Manrope字体 */
+            padding: 10px;
+            border-radius: 8px;
+            transition: all 0.3s ease;
+            width: fit-content;
+        }
+
+        .nav-item:hover {
+            transform: translateY(-2px); /* Add float effect */
+            text-shadow: 0 0 8px rgba(255, 255, 255, 0.7); /* Add glow effect */
+        }
+
+        .nav-item span {
+            font-size: 18px; /* Further increased size */
+            text-align: center;
+            font-family: 'Cormorant Garamond', serif; /* Changed font */
+        }
+
+        .main-content {
+            position: absolute;
+            left: 0;
+            right: 0;
+            top: 0;
+            bottom: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100%;
+            background-image: url('./main_image/background.webp'); /* 将PNG替换为WebP */
+            background-size: cover;
+            background-position: center center;
+            background-repeat: no-repeat;
+            mix-blend-mode: normal;
+            -webkit-backface-visibility: hidden;
+            backface-visibility: hidden;
+        }
+
+        .settings-image {
+            /* This element now acts as a white overlay that fades out */
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: white; /* White overlay */
+            z-index: 1; /* Above main-content background, below scene items */
+            opacity: 1; /* Start opaque */
+            pointer-events: none; /* Prevent interaction */
+            animation: fadeOutWhite 1s ease-in-out forwards; /* Apply fade-out animation */
+            content: ''; /* Prevent img rendering if possible, or use display:none after animation */
+        }
+
+        .scene-image {
+            width: 100%;
+            height: auto;
+            background: transparent;
+            mix-blend-mode: normal;
+            -webkit-backface-visibility: hidden;
+            backface-visibility: hidden;
+            opacity: 0;
+            animation: fadeIn 1s ease-in-out 0.8s forwards, pulsingDropShadow 2.5s ease-in-out infinite;
+            display: block;
+        }
+
+        .scene-image2 {
+            width: 100%;
+            height: auto;
+            background: transparent;
+            mix-blend-mode: normal;
+            -webkit-backface-visibility: hidden;
+            backface-visibility: hidden;
+            opacity: 0;
+            animation: fadeIn 1s ease-in-out 0.8s forwards, pulsingDropShadow 2.5s ease-in-out infinite;
+            display: block;
+        }
+
+        .scene-image3 {
+            width: 100%;
+            height: auto;
+            background: transparent;
+            mix-blend-mode: normal;
+            -webkit-backface-visibility: hidden;
+            backface-visibility: hidden;
+            opacity: 0;
+            animation: fadeIn 1s ease-in-out 0.8s forwards, pulsingDropShadow 2.5s ease-in-out infinite;
+            display: block;
+        }
+
+        .scene-container {
+            position: absolute;
+            z-index: 2;
+        }
+        
+        .scene1-container {
+            width: 25%;
+            margin-left: 37%;
+            margin-top: 28%;
+        }
+        
+        .scene2-container {
+            width: 50%;
+            margin-left: -30%;
+            margin-top: -12%;
+        }
+        
+        .scene3-container {
+            width: 17%;
+            margin-left: 5%;
+            margin-top: -25%;
+        }
+
+        .scene-container img {
+            width: 100%;
+            height: auto;
+            display: block;
+        }
+
+        .scene-container:hover .scene-image {
+            content: url('./main_image/scene1(2).webp');
+        }
+        
+        .scene-container:hover .scene-image2 {
+            content: url('./main_image/scene2(2).webp');
+        }
+        
+        .scene-container:hover .scene-image3 {
+            content: url('./main_image/scene3(2).webp');
+        }
+
+        /* 添加场景文字说明样式 */
+        .scene-text {
+            position: absolute;
+            color: #2D124D;
+            font-size: 18px;
+            line-height: 1.5;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+            pointer-events: none;
+            z-index: 3;
+            background-color: #E8DDF0;
+            padding: 5px 10px;
+            border-radius: 10px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1); /* Updated box-shadow */
+            font-family: 'Manrope', sans-serif; /* 使用Manrope字体 */
+        }
+
+        /* Class to force show scene text */
+        .scene-text.show-text {
+            opacity: 1;
+        }
+        
+        /* Specific positioning for each scene text */
+        .scene1-text {
+            margin-left: 37%;
+            margin-top: 15%;
+        }
+        .scene2-text {
+            margin-left: -39%;
+            margin-top: -17%;
+        }
+        .scene3-text {
+            margin-left: 0%;
+            margin-top: -44%;
+        }
+
+        /* 当鼠标悬停在场景容器上时显示文字 */
+        .scene-container:hover + .scene-text {
+            opacity: 1;
+        }
+
+        .custom-button {
+            position: absolute;
+            top: 85px;
+            right: 4vw;
+            padding: 10px 15px;
+            /* background-color: #F8E0F0; */ /* Old light pink background */
+            background-color: #E1CBF6; /* New light purple background */
+            border: 1px solid #C8A0C0; /* Kept darker border */
+            border-radius: 6px;
+            color: #3e3e3e;
+            font-family: 'Manrope', sans-serif; /* 使用Manrope字体 */
+            font-size: 18px;
+            cursor: pointer;
+            transition: transform 0.2s, box-shadow 0.2s;
+            z-index: 1002;
+            width: 130px;
+            text-align: center;
+            opacity: 0; /* Initially hidden */
+            animation: fadeIn 0.5s ease-in-out 7s forwards; /* Delayed fade in - CHANGED to 7s */
+        }
+
+        .custom-button:hover {
+            transform: scale(1.05);
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1); /* Keep outer shadow on hover, removed inset */
+        }
+
+        .tooltip {
+            position: absolute;
+            top: 30px;
+            right: 50px;
+            width: auto;
+            height: auto;
+            z-index: 1000;
+        }
+
+        .profile-button {
+            position: absolute;
+            top: 30px;
+            right: 4vw;
+            padding: 10px 15px;
+            /* background-color: #F8E0F0; */ /* Old light pink background */
+            background-color: #E1CBF6; /* New light purple background */
+            border: 1px solid #C8A0C0; /* Kept darker border */
+            border-radius: 6px;
+            color: #3e3e3e;
+            font-family: 'Manrope', sans-serif; /* 使用Manrope字体 */
+            font-size: 18px;
+            cursor: pointer;
+            transition: transform 0.2s, box-shadow 0.2s;
+            z-index: 1002;
+            width: 130px;
+            text-align: center;
+            opacity: 0; /* Initially hidden */
+            animation: fadeIn 0.5s ease-in-out 7s forwards; /* Delayed fade in - CHANGED to 7s */
+        }
+
+        .profile-button:hover {
+             transform: scale(1.05);
+             box-shadow: 0 4px 8px rgba(0,0,0,0.1); /* Keep outer shadow on hover, removed inset */
+        }
+
+        /* 添加notes弹出层样式 */
+        .popup-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100vh;
+            background-color: rgba(0, 0, 0, 0.5);
+            backdrop-filter: blur(0.1px);
+            -webkit-backdrop-filter: blur(0.1px);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 1003; /* Increased z-index to be above buttons (1002) */
+        }
+
+        .popup-image {
+            max-width: 70%;
+            max-height: 90vh;
+            object-fit: contain;
+        }
+
+        .popup-content {
+            background-color: white;
+            padding: 20px;
+            border-radius: 10px;
+            width: 80%;
+            height: 80vh;
+            overflow-y: auto;
+            position: relative;
+        }
+
+        iframe {
+            width: 95%;
+            height: auto;
+            border: none;
+            aspect-ratio: 16/9;
+            opacity: 0;
+            transition: opacity 0.5s ease-in-out;
+            position: relative; /* 确保 iframe 位置固定 */
+            z-index: 1001; /* 确保 iframe 在正确层级 */
+        }
+
+        iframe.loaded {
+            opacity: 1;
+        }
+
+        .container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100vh;
+            width: 100%;
+            position: relative;
+            overflow: hidden;
+        }
+
+        /* Add styles for draggable popup */
+        #avatarPopup {
+             /* Styles now primarily come from .avatar-popup-content */
+        }
+
+        /* Style for the new profile button */
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
+        @keyframes pulsingDropShadow {
+            0%   { filter: drop-shadow(0 0 5px rgba(255, 255, 255, 0.6)); } /* Changed opacity to 0.6 */
+            50%  { filter: drop-shadow(0 0 15px rgba(255, 255, 255, 0.9)); } /* Changed opacity to 0.9 */
+            100% { filter: drop-shadow(0 0 5px rgba(255, 255, 255, 0.6)); } /* Changed opacity to 0.6 */
+        }
+
+        /* Add shake animation */
+        @keyframes shake {
+            0% { transform: translate(1px, 1px) rotate(0deg); }
+            10% { transform: translate(-1px, -2px) rotate(-1deg); }
+            20% { transform: translate(-3px, 0px) rotate(1deg); }
+            30% { transform: translate(3px, 2px) rotate(0deg); }
+            40% { transform: translate(1px, -1px) rotate(1deg); }
+            50% { transform: translate(-1px, 2px) rotate(-1deg); }
+            60% { transform: translate(-3px, 1px) rotate(0deg); }
+            70% { transform: translate(3px, 1px) rotate(-1deg); }
+            80% { transform: translate(-1px, -1px) rotate(1deg); }
+            90% { transform: translate(1px, 2px) rotate(0deg); }
+            100% { transform: translate(1px, -2px) rotate(-1deg); }
+        }
+
+        /* Class to disable mouse interaction */
+        .interaction-disabled {
+            pointer-events: none;
+        }
+
+        /* New styles for the custom window popup */
+        .custom-popup-window {
+            position: relative; /* Container for positioning elements */
+            width: 33%; /* Adjust width as needed */
+            /* REMOVED fixed height: height: 350px; */
+            /* Remove default background/padding/border if any from overlay */
+            background: none;
+            padding: 0;
+            border: none;
+            /* REMOVED flex properties: display: flex; align-items: center; justify-content: center; */
+        }
+
+        .custom-popup-border {
+            /* Let the image define the container height */
+            display: block; /* Treat image as a block */
+            width: 100%;    /* Fill container width */
+            height: auto;   /* Maintain aspect ratio */
+            /* REMOVED absolute positioning and z-index */
+            /* pointer-events: none; /* Remove this too potentially */
+        }
+
+        .custom-popup-close-button {
+            position: absolute;
+            /* Adjust positioning relative to the container now */
+            top: 15px; /* Further decreased top offset */
+            right: 25px; /* Further decreased right offset */
+            width: 35px; /* Increased size */
+            height: auto;
+            z-index: 3; /* Above border and content */
+            cursor: pointer;
+            transition: transform 0.2s ease;
+        }
+         .custom-popup-close-button:hover {
+             transform: scale(1.1);
+         }
+
+        .custom-popup-content-area {
+            position: absolute; /* Position absolutely within the container */
+            /* Adjust positioning and size to fit INSIDE the border image */
+            top: 15%;     /* Example: Needs tuning */
+            left: 10%;    /* Example: Needs tuning */
+            width: 80%;   /* Example: Needs tuning */
+            height: 70%;  /* Example: Needs tuning */
+            z-index: 2; /* Above border image */
+            /* Add padding if needed inside the content area */
+            padding: 20px;
+            color: #333; /* Adjust text color for the new background */
+            text-align: left;
+            overflow-y: auto; /* Add scroll if content exceeds height */
+            /* Styles from old .avatar-popup-content that might be relevant */
+             font-size: 16px;
+             line-height: 1.5;
+            box-sizing: border-box; /* Include padding in width/height */
+            font-family: 'Manrope', sans-serif; /* 使用Manrope字体 */
+        }
+
+        /* Adjust specific elements inside the content area */
+        .custom-popup-content-area .username {
+             font-size: 24px;
+             color: #555; /* Adjust color */
+             margin: 15px 0;
+             font-family: 'Manrope', sans-serif; /* 使用Manrope字体 */
+        }
+
+        .custom-popup-content-area .stats {
+             display: flex;
+             justify-content: space-between;
+             margin: 20px 0;
+             font-size: 16px;
+             color: #555; /* Adjust color */
+             font-family: 'Manrope', sans-serif; /* 使用Manrope字体 */
+        }
+
+        .custom-popup-content-area .bio {
+             margin-top: 20px;
+             font-size: 16px;
+             line-height: 1.5;
+             color: #333; /* Adjust color */
+             font-family: 'Manrope', sans-serif; /* 使用Manrope字体 */
+        }
+         .custom-popup-content-area .bio-line {
+             margin: 8px 0;
+             font-family: 'Manrope', sans-serif; /* 使用Manrope字体 */
+         }
+
+
+        /* Hide the original close button if it's still in the DOM */
+        #avatarPopup > .close-button {
+            display: none;
+        }
+
+        /* New styles for iframe popups with window border */
+        .iframe-window-container {
+            position: relative;
+            width: 96vw; /* Keep width at 96% viewport width */
+            /* max-width: 1400px; */ /* Max-width might need adjustment or removal if aspect ratio is fixed */
+            height: 96vh; /* Changed height to 96% viewport height */
+            /* Height will be determined by content or aspect ratio */
+            background: none;
+            border: none;
+            padding: 0;
+            /* Add some perspective if needed for 3D effects, unlikely here */
+            /* perspective: 1000px; */
+        }
+
+        .iframe-window-border {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            /* object-fit: cover; */ /* Cover container, maintain aspect ratio, crop excess */
+            object-fit: fill; /* Stretch/compress image to fill container exactly, ignore aspect ratio */
+            /* REMOVED object-position: center center; */
+            z-index: 1;
+            pointer-events: none; /* Allow clicks to pass through */
+        }
+
+        /* Adjust iframe styles within the new container */
+        .iframe-window-container iframe {
+            position: absolute; /* Keep absolute for centering */
+            display: block; /* Good practice */
+            /* width: 95%; */ /* Remove fixed percentage width */
+            /* height: auto; */ /* Remove height auto */
+            aspect-ratio: 16 / 9; /* Maintain aspect ratio */
+            /* Add max constraints to ensure padding on all sides */
+            max-width: 94%; 
+            max-height: 94%;
+            /* Keep absolute centering */
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            z-index: 2; /* Above border */
+            border: none;
+            opacity: 0; /* Keep original opacity transition */
+            transition: opacity 0.5s ease-in-out;
+        }
+        .iframe-window-container iframe.loaded {
+             opacity: 1;
+        }
+
+        /* Adjust close button position relative to the new container */
+        .iframe-window-container .close-button {
+             /* Override general .close-button styles if needed */
+             position: absolute; 
+             top: 3%;  /* Adjust % or px */
+             right: 4%; /* Adjust % or px */
+             z-index: 3; /* Ensure it's on top */
+             /* Keep other .close-button styles like background, padding etc. */
+        }
+
+        /* Style for the new iframe close icon */
+        .iframe-close-icon {
+            position: absolute;
+            /* Match positioning with #avatarPopup's close button */
+            top: 15px; /* Adjust as needed */
+            right: 25px; /* Adjust as needed */
+            width: 45px; /* Increased size from 35px to 45px */
+            height: auto;
+            z-index: 3; /* On top */
+            cursor: pointer;
+            transition: transform 0.2s ease;
+        }
+        .iframe-close-icon:hover {
+            transform: scale(1.1);
+        }
+
+        /* Add fadeOutWhite animation */
+        @keyframes fadeOutWhite {
+            from { opacity: 1; }
+            to { opacity: 0; }
+        }
+
+        /* Added styles for preload-hidden class */
+        .scene-image.preload-hidden,
+        .scene-image2.preload-hidden,
+        .scene-image3.preload-hidden {
+            opacity: 0 !important;
+            animation: none !important;
+        }
+
+        /* Style for the visited icon */
+        .visited-icon {
+            position: absolute;
+            z-index: 4;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            /* background-color: rgba(181, 145, 200, 0.85); */ /* Previous light purple */
+            /* background-color: rgba(181, 145, 200, 0.85); */ /* CHANGED to darker purple */
+            background-color: rgb(181, 145, 200); /* Fully opaque purple */
+            color: #3e3e3e;
+            border-radius: 50%;
+            width: 40px;  /* 从30px改为40px */
+            height: 40px; /* 从30px改为40px */
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 26px; /* 从22px改为26px */
+            font-weight: bold;
+            line-height: 1.1; /* Keep adjustment */
+            pointer-events: none;
+            opacity: 0;
+            transition: opacity 0.4s ease-in-out;
+        }
+        
+        /* Special style for Scene 1 visited icon - coral pink color */
+        #scene1-visited-icon {
+            /* background-color: rgba(247, 140, 162, 0.85); */ /* Coral pink for Scene 1 */
+            background-color: rgb(247, 140, 162); /* Fully opaque coral pink */
+        }
+        
+        /* Special style for Scene 2 visited icon - deep blue color */
+        #scene2-visited-icon {
+            background-color: #1c467a; /* Deep blue for Scene 2 */
+            color: white; /* White text color */
+        }
+
+        /* Style for the static number markers */
+        .static-marker {
+            position: absolute;
+            z-index: 4; /* Same as visited-icon */
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            /* background-color: rgba(181, 145, 200, 0.85); */ /* Default color from visited-icon */
+            /* background-color: rgba(200, 200, 200, 0.7); */ /* Uniform, subtle light gray - REMOVED */
+            background-color: rgba(200, 200, 200, 0.7); /* Restored subtle light gray background */
+            border: 2px solid #6495ED; /* Added blue border */
+            color: #3e3e3e;
+            border-radius: 50%;
+            width: 40px;  /* Same as visited-icon */
+            height: 40px; /* Same as visited-icon */
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 26px; /* Same as visited-icon */
+            font-weight: bold;
+            line-height: 1.1; /* Same as visited-icon */
+            pointer-events: none;
+            opacity: 0; /* Initially hidden */
+            /* No transition needed */
+            /* Add the same animation as the scene images */
+            animation: fadeIn 1s ease-in-out 0.8s forwards;
+        }
+
+        /* Specific colors for static markers 1 and 2 - REMOVED */
+        /*
+        #static-marker-1 {
+            background-color: rgba(247, 140, 162, 0.85); // Coral pink for Scene 1
+        }
+        
+        #static-marker-2 {
+            background-color: #1c467a; // Deep blue for Scene 2
+            color: white; // White text color
+        }
+        */
+
+        /* 添加简单淡出过渡效果 */
+        body.fade-out {
+            opacity: 0;
+            transition: opacity 0.5s ease-out;
+        }
+
+        /* 修改退出确认弹窗样式，移除遮罩层 */
+        #exitConfirmPopup {
+            background-color: transparent;
+            backdrop-filter: none;
+            -webkit-backdrop-filter: none;
+        }
+
+    </style>
+
+</head>
+<body>
+    <nav class="nav-sidebar">
+        <a href="#" class="nav-item" data-page="exit" id="exitButton">
+            <span>⌂ Home</span>
+        </a>
+    </nav>
+
+    <main class="main-content">
+        
+        <div class="scene-container scene1-container">
+            <span class="static-marker" id="static-marker-1">1</span>
+            <img src="./main_image/scene1(1).webp" alt="Scene" class="scene-image preload-hidden">
+        </div>
+        <div class="scene-text scene1-text"><strong>Scene 1: Posting</strong> <br>" Adjust your post for better visibility.	"</div>
+
+        <div class="scene-container scene2-container">
+            <span class="static-marker" id="static-marker-2">2</span>
+            <img src="./main_image/scene2(1).webp" alt="Scene2" class="scene-image2 preload-hidden">
+        </div>
+        <div class="scene-text scene2-text"><strong>Scene 2: Replying</strong><br>" You have 5 comments left to reply."</div>
+        
+        <div class="scene-container scene3-container">
+            <span class="static-marker" id="static-marker-3">3</span>
+            <img src="./main_image/scene3(1).webp" alt="Scene3" class="scene-image3 preload-hidden">
+        </div>
+        <div class="scene-text scene3-text"><strong>Scene 3: Taking Selfie</strong><br>" Smile and capture your platform self."</div>
+        
+        <button class="profile-button" style="font-weight: bold;">Profile Info</button>
+        <button class="custom-button" style="font-weight: bold;">Guide</button>
+    </main>
+
+    <!-- 添加scene1弹出层 -->
+    <div class="popup-overlay" id="scene1Popup">
+        <div class="iframe-window-container">
+            <img src="./main_image/window3.webp" class="iframe-window-border" alt="Window Border">
+            <img src="./main_image/window2.webp" class="iframe-close-icon" alt="Close">
+        <iframe src="./storytelling.html" onload="this.classList.add('loaded')"></iframe>
+        </div>
+    </div>
+
+    <!-- 添加scene2弹出层 -->
+    <div class="popup-overlay" id="scene2Popup">
+        <div class="iframe-window-container">
+            <img src="./main_image/window3.webp" class="iframe-window-border" alt="Window Border">
+            <img src="./main_image/window2.webp" class="iframe-close-icon" alt="Close">
+        <iframe src="./storytelling2.html" onload="this.classList.add('loaded')"></iframe>
+        </div>
+    </div>
+
+    <!-- 添加scene3弹出层 -->
+    <div class="popup-overlay" id="scene3Popup">
+        <div class="iframe-window-container">
+            <img src="./main_image/window3.webp" class="iframe-window-border" alt="Window Border">
+            <img src="./main_image/window2.webp" class="iframe-close-icon" alt="Close">
+        <iframe src="./storytelling3.html" onload="this.classList.add('loaded')"></iframe>
+        </div>
+    </div>
+
+    <!-- 添加avatar弹出层 -->
+    <div class="popup-overlay" id="avatarPopup">
+        <!-- New Custom Window Structure -->
+        <div class="custom-popup-window">
+            <img src="./main_image/window1.webp" alt="Popup Border" class="custom-popup-border">
+            <img src="./main_image/window2.webp" alt="Close" class="custom-popup-close-button" id="customCloseButton">
+            <div class="custom-popup-content-area">
+                <!-- Content will be populated by JS -->
+                <div class="username"></div>
+            <div class="stats">
+                    <div></div>
+                    <div></div>
+                    <div></div>
+            </div>
+            <div class="bio">
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 添加退出确认弹出层 -->
+    <div class="popup-overlay" id="exitConfirmPopup">
+        <div class="custom-popup-window">
+            <img src="./main_image/window1.webp" alt="Popup Border" class="custom-popup-border">
+            <img src="./main_image/window2.webp" alt="Close" class="custom-popup-close-button" id="exitCloseButton">
+            <div class="custom-popup-content-area">
+                <div class="username" style="font-size: 20px; font-weight: bold;">Confirm Exit</div>
+                <div class="stats" style="display: none;"></div>
+                <div class="bio" style="font-size: 16px;">
+                    <div class="bio-line">The page will refresh and clear your progress. <br>Click "Start Performing" to re-enter the experience.</div>
+                    <br>
+                    <div style="display: flex; justify-content: space-around; margin-top: 20px;">
+                        <button id="confirmExitButton" style="padding: 8px 15px; background: #E1CBF6; border: 1px solid #C8A0C0; border-radius: 6px; cursor: pointer; font-family: 'Manrope', sans-serif;">Confirm</button>
+                        <button id="cancelExitButton" style="padding: 8px 15px; background: #E1CBF6; border: 1px solid #C8A0C0; border-radius: 6px; cursor: pointer; font-family: 'Manrope', sans-serif;">Cancel</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="./gsap-public/minified/gsap.min.js"></script>
+    <script src="./gsap-public/minified/ScrollTrigger.min.js"></script>
+    <script src="./gsap-public/minified/ScrollToPlugin.min.js"></script>
+    <script>
+        // 导航栏状态管理
+        function updateNavState(page) {
+            document.querySelectorAll('.nav-item').forEach(navItem => {
+                const isActive = navItem.dataset.page === page;
+                navItem.classList.toggle('active', isActive);
+                // const img = navItem.querySelector('img'); // Removed
+                // img.src = isActive ? img.dataset.active : img.dataset.inactive; // Removed
+            });
+        }
+
+        // 导航栏交互
+        document.querySelectorAll('.nav-item').forEach(item => {
+            item.addEventListener('click', (e) => {
+                const page = item.dataset.page;
+                if (item.getAttribute('href') === '#') {
+                    e.preventDefault();
+                    updateNavState(page);
+                }
+                // 如果有href属性且不是#，则允许默认跳转行为
+            });
+
+            item.addEventListener('mouseenter', () => {
+                if (!item.classList.contains('active')) {
+                    // const img = item.querySelector('img'); // Removed
+                    // img.src = img.dataset.active; // Removed
+                }
+            });
+
+            item.addEventListener('mouseleave', () => {
+                if (!item.classList.contains('active')) {
+                    // const img = item.querySelector('img'); // Removed
+                    // img.src = img.dataset.inactive; // Removed
+                }
+            });
+        });
+
+        // --- Refactored Shake Effect Logic ---
+        const shakeAnimationMap = new Map(); // Use a Map to track animations per element
+
+        function startShake(element) {
+            if (!element) return;
+            // Stop existing animation for this element if any
+            if (shakeAnimationMap.has(element)) {
+                shakeAnimationMap.get(element).kill();
+            }
+            // Start new animation
+            const animationInstance = gsap.to(element, {
+                        duration: 0.1,
+                x: "random(-5, 5)",
+                y: "random(-5, 5)",
+                        repeat: -1,
+                        yoyo: true,
+                        ease: "power1.inOut"
+                    });
+            // Store the animation instance
+            shakeAnimationMap.set(element, animationInstance);
+        }
+
+        function stopShake(element) {
+            if (!element) return;
+            // Stop and clear animation for this element
+            if (shakeAnimationMap.has(element)) {
+                shakeAnimationMap.get(element).kill();
+                gsap.set(element, { x: 0, y: 0 }); // Reset position
+                shakeAnimationMap.delete(element); // Remove from map
+            } else {
+                // Ensure position is reset even if no animation was tracked (e.g., initial state)
+                        gsap.set(element, { x: 0, y: 0 });
+            }
+        }
+
+        function addShakeEffect(selector) {
+            const elements = document.querySelectorAll(selector);
+            elements.forEach((element) => {
+                element.addEventListener('mouseenter', () => startShake(element));
+                element.addEventListener('mouseleave', () => stopShake(element));
+            });
+        }
+        // --- End Refactored Shake Effect Logic ---
+
+        // 为所有需要抖动效果的元素添加效果 (Now targeting containers)
+        addShakeEffect('.scene-container');
+
+        // Function to reset popup content to default (Avatar version)
+        function resetPopupContent() {
+            const popup = document.getElementById('avatarPopup');
+            // Added null check for popup itself, though unlikely unless ID changes
+            if (!popup) {
+                console.error('#avatarPopup element not found.');
+                return;
+            }
+            // Target the new content area
+            const popupContent = popup.querySelector('.custom-popup-content-area');
+            if (!popupContent) {
+                console.error('Popup content area (.custom-popup-content-area) not found inside #avatarPopup.');
+                return; // Guard against element not found
+            }
+
+            // Target elements within the new content area
+            const usernameDiv = popupContent.querySelector('.username');
+            const statsDiv = popupContent.querySelector('.stats');
+            const bioDiv = popupContent.querySelector('.bio');
+
+            // Added null checks for inner elements
+            if (!usernameDiv || !statsDiv || !bioDiv) {
+                console.error('One or more content elements (.username, .stats, .bio) not found inside popup content area.');
+                return;
+            }
+
+            // Set the content in the new structure
+            usernameDiv.textContent = 'she.was.online';
+
+            // Update stats divs individually if needed
+            const statsChildren = statsDiv.children;
+            if (statsChildren.length === 3) {
+                statsChildren[0].textContent = '298 posts ';
+                statsChildren[1].textContent = '1.1k followers';
+                statsChildren[2].textContent = '995 following';
+            }
+            statsDiv.style.display = 'flex'; // Ensure stats are visible
+
+            bioDiv.innerHTML = `
+                <div class="bio-line">Building a brand out of daily life.  </div>
+                <div class="bio-line">Photos, moments, little things.  </div>
+  
+                <br>
+                <div class="bio-line">It's not about showing everything.  </div>
+                <div class="bio-line">It's about showing what fits.</div>
+                <br>
+                <p style="font-size: 0.9em; color: #666; margin-top: 15px;"><em>This is a fictional creator profile designed for this interactive experience.</em></p>
+            `;
+        }
+
+        // ---- Sequential Text Hint Logic (Revised) ----
+        document.addEventListener('DOMContentLoaded', () => {
+            // Scene elements - Target containers and related texts
+            const scene1Container = document.querySelector('.scene1-container');
+            const scene1Text = scene1Container ? scene1Container.nextElementSibling : null;
+            const scene2Container = document.querySelector('.scene2-container');
+            const scene2Text = scene2Container ? scene2Container.nextElementSibling : null;
+            const scene3Container = document.querySelector('.scene3-container');
+            const scene3Text = scene3Container ? scene3Container.nextElementSibling : null;
+            
+            // Timing
+            const hintDuration = 2000; // Duration of shake/highlight
+            const delayBetweenHints = 500; // Delay between next hint appearing
+            const initialDelay = 2500; // Delay after page load
+
+            // Validate all elements exist
+            if (!scene1Container || !scene1Text || !scene2Container || !scene2Text || !scene3Container || !scene3Text) {
+                console.error("One or more scene containers or text elements not found for sequential hints.");
+                return;
+            }
+
+            // Disable interaction during sequence (Target the containers)
+            scene1Container.classList.add('interaction-disabled');
+            scene2Container.classList.add('interaction-disabled');
+            scene3Container.classList.add('interaction-disabled');
+
+            // Ensure elements start static and text hidden initially (Target the containers)
+            stopShake(scene1Container);
+            stopShake(scene2Container);
+            stopShake(scene3Container);
+            scene1Text.classList.remove('show-text');
+            scene2Text.classList.remove('show-text');
+            scene3Text.classList.remove('show-text');
+
+
+            // Start the sequence after the initial delay
+            setTimeout(() => {
+                // Phase 1: Activate Scene 1
+                scene1Text.classList.add('show-text');
+                startShake(scene1Container); // Shake container
+
+                // Schedule actions for when Scene 1 highlight time is over
+                setTimeout(() => {
+                    stopShake(scene1Container); // Stop shake container 1
+
+                    // Schedule start of Scene 2 after delay
+                    setTimeout(() => {
+                        scene2Text.classList.add('show-text'); // Show text 2
+                        startShake(scene2Container); // Shake container 2
+
+                        // Schedule actions for when Scene 2 highlight time is over
+                        setTimeout(() => {
+                            stopShake(scene2Container); // Stop shake container 2
+
+                            // Schedule start of Scene 3 after delay
+                            setTimeout(() => {
+                                scene3Text.classList.add('show-text'); // Show text 3
+                                startShake(scene3Container); // Shake container 3
+
+                                // Schedule end of Scene 3 highlight AND end of sequence
+                                setTimeout(() => {
+                                    stopShake(scene3Container); // Stop shake container 3
+                                    // --- Sequence End --- Re-enable interaction for scene containers AND hide texts
+                                    scene1Container.classList.remove('interaction-disabled');
+                                    scene2Container.classList.remove('interaction-disabled');
+                                    scene3Container.classList.remove('interaction-disabled');
+                                    
+                                    // Hide all texts now that sequence is over
+                                    scene1Text.classList.remove('show-text');
+                                    scene2Text.classList.remove('show-text');
+                                    scene3Text.classList.remove('show-text');
+                                }, hintDuration);
+
+                            }, delayBetweenHints); // Delay before Scene 3 starts
+
+                        }, hintDuration); // Duration of Scene 2 highlight
+
+                    }, delayBetweenHints); // Delay before Scene 2 starts
+
+                }, hintDuration); // Duration of Scene 1 highlight
+
+            }, initialDelay); // Initial delay before sequence starts
+        });
+        // ---- End Sequential Text Hint Logic (Revised) ----
+
+        // Add click listener for the profile button
+        const profileButton = document.querySelector('.profile-button');
+        if (profileButton) {
+            profileButton.addEventListener('click', () => {
+                const popup = document.getElementById('avatarPopup');
+                if (popup) { // Added check for popup existence
+                    resetPopupContent(); // Populate the new structure
+                    popup.style.display = 'flex'; // Show the overlay
+                } else {
+                    console.error('#avatarPopup element not found when clicking profile button.');
+                }
+            });
+        } else {
+            console.warn('.profile-button not found. Event listener not attached.');
+        }
+
+        // 添加按钮点击事件 (for the bottom-left "提示" button)
+        const hintButton = document.querySelector('.custom-button');
+        if (hintButton) {
+            hintButton.addEventListener('click', () => {
+                // This button might need its own custom popup or modification
+                // For now, let's make it ALSO use the new popup but change content
+                const popup = document.getElementById('avatarPopup');
+                if (!popup) {
+                     console.error('#avatarPopup element not found when clicking custom button.');
+                     return;
+                 }
+
+                const popupContent = popup.querySelector('.custom-popup-content-area');
+                 if (!popupContent) {
+                     console.error('Popup content area not found when clicking custom button.');
+                     return;
+                 }
+
+                const usernameDiv = popupContent.querySelector('.username');
+                const statsDiv = popupContent.querySelector('.stats');
+                const bioDiv = popupContent.querySelector('.bio');
+
+                 // Added null checks for inner elements
+                 if (!usernameDiv || !statsDiv || !bioDiv) {
+                     console.error('One or more content elements (.username, .stats, .bio) not found when clicking custom button.');
+                     return;
+                 }
+
+                // Set content for Button click ("Guide") in the new structure
+                usernameDiv.textContent = 'Guide'; // Changed title to Guide
+                statsDiv.style.display = 'none'; // Hide stats for this view
+                bioDiv.innerHTML = `
+                     <p><strong>⚠ Refreshing the page will reset everything to the starting point.</strong></p>
+                     <br>
+                     <p>This is an interactive experiment about digital labour on Instagram.</p>
+                     <p>You are now inside the fictional workspace of a self-branding creator.</p>
+                     <p>Click on the phone, laptop, or camera to explore three scenes.</p>
+                     <br>
+                     <p>The first two scenes begin with a short scrollable narrative (approx. 3–4 screens).</p>
+                     <p>After that, you'll reach the interactive interface.</p>
+                     <p>Once you enter the interactive part in each scene, you've experienced the core of this project.</p>
+                `;
+
+                popup.style.display = 'flex';
+            });
+        } else {
+            console.warn('.custom-button not found. Event listener not attached.');
+        }
+
+        // Helper function to open scene popups
+        function openScenePopup(popupId, iframeSrc) {
+            const popup = document.getElementById(popupId);
+            if (popup) {
+                popup.style.display = 'flex';
+                const iframe = popup.querySelector('iframe');
+                if (iframe) {
+                    // Ensure iframe reloads content if needed, or just ensure visibility
+                    // If iframe src is always the same, just managing loaded class might be enough
+                    iframe.classList.remove('loaded');
+                    // Optionally reset src if needed: iframe.src = iframeSrc;
+                    requestAnimationFrame(() => {
+                        iframe.classList.add('loaded');
+                    });
+                } else {
+                    console.error(`Iframe not found inside #${popupId}.`);
+                }
+            } else {
+                console.error(`#${popupId} element not found.`);
+            }
+        }
+
+        // 添加场景容器点击事件 (Refactored)
+        const scene1Container = document.querySelector('.scene1-container');
+        if (scene1Container) {
+            scene1Container.addEventListener('click', (e) => {
+                // Check if interaction is disabled (e.g., during intro animation)
+                if (e.currentTarget.classList.contains('interaction-disabled')) return;
+                openScenePopup('scene1Popup', 'storytelling.html');
+            });
+        } else {
+            console.warn('.scene1-container not found. Event listener not attached.');
+        }
+
+        const scene2Container = document.querySelector('.scene2-container');
+        if (scene2Container) {
+            scene2Container.addEventListener('click', (e) => {
+                if (e.currentTarget.classList.contains('interaction-disabled')) return;
+                openScenePopup('scene2Popup', 'storytelling2.html');
+            });
+        } else {
+            console.warn('.scene2-container not found. Event listener not attached.');
+        }
+
+        const scene3Container = document.querySelector('.scene3-container');
+        if (scene3Container) {
+            scene3Container.addEventListener('click', (e) => {
+                if (e.currentTarget.classList.contains('interaction-disabled')) return;
+                openScenePopup('scene3Popup', 'storytelling3.html');
+            });
+        } else {
+            console.warn('.scene3-container not found. Event listener not attached.');
+        }
+
+        // Add listener for the NEW custom close button
+         const customCloseBtn = document.getElementById('customCloseButton');
+         if (customCloseBtn) {
+             customCloseBtn.addEventListener('click', (e) => {
+                 e.stopPropagation(); // Prevent overlay click listener
+                 document.getElementById('avatarPopup').style.display = 'none';
+                 // Optional: Call resetPopupContent() here if you want the state reset even when closing
+                 // resetPopupContent();
+             });
+         }
+
+        // Add listener for the NEW iframe close icons
+        document.querySelectorAll('.iframe-close-icon').forEach(iconElement => { // Renamed variable to avoid conflict
+            iconElement.addEventListener('click', (e) => {
+                e.stopPropagation(); // Prevent overlay click listener
+                const popupToClose = e.target.closest('.popup-overlay');
+                if (popupToClose) {
+                    popupToClose.style.display = 'none';
+
+                    let sceneImageSelector = '';
+                    let iconId = '';
+
+                    if (popupToClose.id === 'scene1Popup') {
+                        sceneImageSelector = '.scene-image';
+                        iconId = 'scene1-visited-icon';
+                    } else if (popupToClose.id === 'scene2Popup') {
+                        sceneImageSelector = '.scene-image2';
+                        iconId = 'scene2-visited-icon';
+                    } else if (popupToClose.id === 'scene3Popup') {
+                        sceneImageSelector = '.scene-image3';
+                        iconId = 'scene3-visited-icon';
+                    }
+
+                    // Proceed only if it's one of the scene popups and icon doesn't exist yet
+                    if (sceneImageSelector && !document.getElementById(iconId)) {
+                        const sceneImage = document.querySelector(sceneImageSelector);
+                        // Find the parent container of the image
+                        const sceneContainer = sceneImage ? sceneImage.closest('.scene-container') : null;
+
+                        if (sceneContainer) { // Check if container was found
+                            const icon = document.createElement('span');
+                            icon.id = iconId;
+                            icon.classList.add('visited-icon');
+                            icon.textContent = '...';
+
+                            // Append the icon INSIDE the container
+                            sceneContainer.appendChild(icon);
+
+                            // Trigger fade-in animation
+                            requestAnimationFrame(() => {
+                                requestAnimationFrame(() => { // Double request for better browser compatibility
+                                     icon.style.opacity = '1';
+                                 });
+                            });
+                        } else {
+                             console.error('Scene container not found for selector:', sceneImageSelector);
+                        }
+                    }
+                }
+            });
+        });
+
+        // MODIFY Overlay click logic to ONLY handle specific cases if needed, REMOVE general close-on-overlay-click
+        document.querySelectorAll('.popup-overlay').forEach(overlay => {
+            overlay.addEventListener('click', (e) => {
+                // The logic for closing non-avatar popups on overlay click is now removed.
+                // Only the dedicated close buttons (.iframe-close-icon, #customCloseButton)
+                // will handle closing the popups.
+                /*
+                if (e.target === e.currentTarget && overlay.id !== 'avatarPopup') {
+                    overlay.style.display = 'none';
+                }
+                */
+            });
+        });
+
+        // Add DOMContentLoaded listener to remove preload-hidden class
+        window.addEventListener('DOMContentLoaded', () => {
+            document.querySelectorAll('.scene-image, .scene-image2, .scene-image3').forEach(img => {
+                // Check if element exists before trying to remove class, for robustness
+                if (img) {
+                    img.classList.remove('preload-hidden');
+                }
+            });
+        });
+
+        // 添加退出按钮点击事件
+        const exitButton = document.getElementById('exitButton');
+        if (exitButton) {
+            exitButton.addEventListener('click', (e) => {
+                e.preventDefault(); // 阻止默认跳转
+                const exitPopup = document.getElementById('exitConfirmPopup');
+                if (exitPopup) {
+                    exitPopup.style.display = 'flex';
+                }
+            });
+        }
+
+        // 添加退出确认弹窗的关闭按钮事件
+        const exitCloseButton = document.getElementById('exitCloseButton');
+        if (exitCloseButton) {
+            exitCloseButton.addEventListener('click', () => {
+                const exitPopup = document.getElementById('exitConfirmPopup');
+                if (exitPopup) {
+                    exitPopup.style.display = 'none';
+                }
+            });
+        }
+
+        // 添加取消退出按钮事件
+        const cancelExitButton = document.getElementById('cancelExitButton');
+        if (cancelExitButton) {
+            cancelExitButton.addEventListener('click', () => {
+                const exitPopup = document.getElementById('exitConfirmPopup');
+                if (exitPopup) {
+                    exitPopup.style.display = 'none';
+                }
+            });
+        }
+
+        // 添加确认退出按钮事件
+        const confirmExitButton = document.getElementById('confirmExitButton');
+        if (confirmExitButton) {
+            confirmExitButton.addEventListener('click', () => {
+                // 添加淡出效果
+                document.body.classList.add('fade-out');
+                // 延迟跳转，等待淡出动画完成
+                setTimeout(() => {
+                    window.location.href = 'entry.html';
+                }, 500);
+            });
+        }
+
+    </script>
+</body>
+</html> 

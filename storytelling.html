@@ -1,0 +1,1225 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>scene1_storytelling</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.4.0/p5.js"></script>
+    <script src="https://unpkg.com/scrollama"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Cookie&display=swap" rel="stylesheet">
+    <!-- Add Manrope Font -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@300;400;500;600&display=swap" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            /* font-family: 'Arial', sans-serif; */ /* Remove old default */
+            font-family: 'Manrope', sans-serif; /* Set Manrope as default */
+            line-height: 1.6;
+            background-color: #ffffff;
+            overflow-x: hidden;
+            opacity: 0;
+            transition: opacity 0.3s ease-in-out;
+        }
+
+        body.loaded {
+            opacity: 1;
+        }
+
+        .scroll-container {
+            position: relative;
+            width: 100%;
+            min-height: 100vh;
+            overflow-y: auto;
+        }
+
+        .scroll-section {
+            min-height: 100vh;
+            position: relative;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .comic-page {
+            width: 100%;
+            height: 100vh;
+            position: relative;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 2rem;
+            background-color: #ffffff;
+            overflow: hidden;
+        }
+
+        .comic-container {
+            max-width: 80%;
+            width: 100%;
+            height: 100%;
+            position: relative;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+        }
+
+        #p5-canvas {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 3;
+        }
+
+        .comic-image {
+            position: relative;
+            z-index: 2;
+        }
+
+        .comic-text {
+            position: absolute;
+            bottom: 2rem;
+            left: 50%;
+            transform: translateX(-50%);
+            background-color: rgba(255, 255, 255, 0.9);
+            padding: 1rem 2rem;
+            border-radius: 8px;
+            text-align: center;
+            max-width: 80%;
+        }
+
+        .typing-indicator {
+            position: fixed;
+            top: 2rem;
+            left: 2rem;
+            background-color: rgba(255, 255, 255, 0.9);
+            color: #262626;
+            padding: 0.5rem 1rem;
+            border-radius: 20px;
+            font-size: 0.9rem;
+            z-index: 1000;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+
+        .typing-indicator i {
+            margin-right: 0.5rem;
+            color: #0095f6;
+        }
+
+        .profile-info {
+            position: fixed;
+            top: 2rem;
+            right: 2rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            background-color: rgba(255, 255, 255, 0.9);
+            padding: 0.5rem 1rem;
+            border-radius: 20px;
+            font-size: 0.9rem;
+            z-index: 1000;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+
+        .profile-info img {
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
+        }
+
+        .profile-info .username {
+            font-weight: 600;
+            color: #262626;
+        }
+
+        .profile-info .time {
+            color: #8e8e8e;
+        }
+
+        .close-button {
+            position: absolute;
+            top: 2rem;
+            right: 2rem;
+            background: none;
+            border: none;
+            font-size: 1.5rem;
+            cursor: pointer;
+            color: #333;
+        }
+
+        /* 第二页分镜样式 */
+        .panels-container {
+            position: relative;
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+        }
+
+        .panel {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .panel video {
+            width: 80%;
+            height: auto;
+            object-fit: cover;
+            border-radius: 8px;
+        }
+
+        /* 对话框样式 */
+        .dialogue-container {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .dialogue-box {
+            background: white;
+            padding: 2rem;
+            border-radius: 12px;
+            width: 600px;
+            max-width: 600px;
+            text-align: left;
+            font-size: 1.2rem;
+            line-height: 1.6;
+            opacity: 1; /* 直接显示，移除渐变效果 */
+            transform: none; /* 移除位移效果 */
+            transition: none; /* 移除过渡效果 */
+            pointer-events: auto;
+            position: relative;
+            border: 2px solid;
+            border-image: linear-gradient(45deg, #f09433 0%, #e6683c 25%, #dc2743 50%, #cc2366 75%, #bc1888 100%) 1;
+        }
+
+        .dialogue-box.active {
+            opacity: 1;
+            transform: none;
+        }
+
+        .dialogue-box .content {
+            margin-bottom: 1rem;
+            /* font-family: 'Arial', sans-serif; */ /* Remove specific font to inherit Manrope */
+            color: #262626;
+        }
+
+        .dialogue-box .hashtags {
+            color: #00376b;
+            font-size: 1rem;
+            font-weight: 500;
+        }
+
+        .dialogue-box .emoji {
+            font-size: 1.4rem;
+            margin-left: 0.2rem;
+        }
+
+        .instagram-actions {
+            margin-top: 1.5rem;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            border-top: 1px solid #dbdbdb;
+            padding-top: 1rem;
+        }
+
+        .instagram-actions .left-actions {
+            display: flex;
+            gap: 1rem;
+        }
+
+        .instagram-actions i {
+            font-size: 1.5rem;
+            color: #262626;
+            cursor: pointer;
+            transition: color 0.2s ease;
+        }
+
+        .instagram-actions i:hover {
+            color: #8e8e8e;
+        }
+
+        .instagram-actions .fa-heart.active {
+            color: #ed4956;
+        }
+
+        .likes-count {
+            margin-top: 0.8rem;
+            font-size: 0.9rem;
+            font-weight: 600;
+            color: #262626;
+        }
+
+        .view-comments {
+            margin-top: 0.4rem;
+            font-size: 0.9rem;
+            color: #8e8e8e;
+            cursor: pointer;
+        }
+
+        .step {
+            min-height: 100vh;
+            position: relative;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 2rem;
+        }
+
+        /* 第二页视频固定容器 */
+        .video-fixed-container {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100vh;
+            z-index: 0;
+            pointer-events: none;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+            visibility: hidden;
+        }
+
+        .video-fixed-container.active {
+            opacity: 1;
+            visibility: visible;
+        }
+
+        .video-fixed-container .comic-page {
+            height: 100%;
+        }
+
+        /* 对话框容器 */
+        .dialogues-container {
+            position: relative;
+            z-index: 5;
+            padding-top: 100vh;
+            background: transparent;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+
+        .dialogues-container.active {
+            opacity: 1;
+        }
+
+        /* 第一页样式 */
+        .scroll-section:first-child {
+            position: relative;
+            z-index: 2;
+        }
+
+        .story-title-header {
+            /* position: absolute; */ /* Revert */
+            position: fixed; /* Back to fixed */
+            top: 20px;
+            left: 20px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            color: #fff;
+            z-index: 10;
+            font-family: 'Arial', sans-serif; /* Keep header font as sans-serif */
+        }
+
+        /* Hide the header specifically within the second page container */
+        /* .video-fixed-container .story-title-header {
+            display: none;
+        } */ /* Remove this rule */
+
+        .title-text {
+            font-family: 'Cookie', cursive; /* Keep Cookie font for title */
+            font-size: 32px;
+            padding: 10px 20px;
+            background: #6494b7;
+            border-radius: 10px;
+            height: 60px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .header-user-info {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 10px 20px;
+            background: #6494b7;
+            border-radius: 10px;
+            height: 60px;
+        }
+
+        .header-user-details {
+            color: #fff;
+        }
+
+        .header-username {
+            font-weight: 600;
+            font-size: 14px;
+        }
+
+        .header-story-time {
+            font-size: 12px;
+            opacity: 0.8;
+        }
+
+        #hashtag-canvas {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 4; /* Needs to be above dialogues */
+            pointer-events: none; /* Allow clicks to pass through */
+            visibility: hidden;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+
+        #hashtag-canvas.active {
+            visibility: visible;
+            opacity: 1;
+        }
+
+        /* Scroll hint style */
+        .scroll-hint {
+            position: fixed;
+            top: 20px;
+            left: 0;
+            right: 0;
+            margin: 0 auto;
+            width: max-content; /* 根据内容设置宽度 */
+            color: #6494b7; /* 使用与标题相同的蓝色 */
+            font-size: 18px;
+            font-weight: bold;
+            opacity: 1; /* 始终显示 */
+            z-index: 1001; /* Above header */
+            background: rgba(255, 255, 255, 0.85);
+            padding: 8px 15px;
+            border-radius: 25px;
+            box-shadow: 0 2px 8px rgba(100, 148, 183, 0.3); /* 柔和的阴影，使用蓝色 */
+            pointer-events: none; /* Prevent interaction */
+            border: 2px solid rgba(100, 148, 183, 0.5); /* 添加边框 */
+            text-align: center; /* 文本居中 */
+            animation: floatUpDown 1.5s ease-in-out infinite; /* Add the animation */
+        }
+
+        /* Style for the right-aligned dialogue box */
+        .step-right .dialogue-box {
+            position: relative; /* Allow relative positioning */
+            left: 30%; /* Move right */
+            width: 450px; /* Set a smaller width */
+            max-width: 450px;
+            background-color: rgba(255, 255, 255, 0.9); /* Semi-transparent white background */
+            border: 3px dashed #a0b4c8; /* Thicker dashed border */
+            border-radius: 15px; /* Slightly larger radius */
+            box-shadow: none; /* Ensure no shadow */
+            padding: 1.5rem; /* Adjust padding if needed */
+            opacity: 1; /* 直接显示，不需要过渡效果 */
+            transform: none; /* 移除位移效果 */
+            transition: none; /* 移除过渡效果 */
+        }
+
+        /* 移除 highlight-box 动画 */
+        .step-right .dialogue-box.active {
+            opacity: 1;
+            transform: none;
+            animation: none;
+        }
+
+        /* 添加高亮动画关键帧 */
+        @keyframes highlight-box {
+            0% { box-shadow: 0 0 0 rgba(160, 180, 200, 0); }
+            30% { box-shadow: 0 0 15px rgba(160, 180, 200, 0.8); }
+            100% { box-shadow: 0 0 0 rgba(160, 180, 200, 0); }
+        }
+
+        /* Add faint quote pseudo-element */
+        .step-right .dialogue-box::before {
+            content: '“'; /* Opening quote */
+            position: absolute;
+            top: -15px; /* Position above and to the left */
+            left: -25px;
+            font-family: serif; /* Use a serif font for quotes */
+            font-size: 6rem; /* Large size */
+            color: rgba(160, 180, 200, 0.25); /* Slightly more visible faint blue */
+            z-index: 1; /* Bring it above the box background */
+            line-height: 1;
+        }
+
+        /* Style for the content inside the right-aligned dialogue box */
+        .step-right .dialogue-box .content {
+             font-style: italic; /* Make text italic */
+             font-size: 1.1rem; /* Set font size */
+             color: #333; /* Slightly softer than black */
+             line-height: 1.7; /* Adjust line height if needed */
+        }
+
+        /* 移除不需要的active类样式 */
+        .scroll-hint.active {
+            opacity: 1;
+        }
+
+        /* Keyframes for the floating animation */
+        @keyframes floatUpDown {
+            0%, 100% {
+                transform: translateY(0);
+            }
+            50% {
+                transform: translateY(-5px); /* Adjust vertical distance as needed */
+            }
+        }
+
+        /* Reduce margin for the step AFTER the right-aligned one */
+        .new-dialogue-step {
+            margin-top: -40vh; /* Pull up by 40vh for ~60vh scroll distance */
+            position: relative; /* Needed for negative margin to work correctly in some layouts */
+            z-index: 1; /* Ensure it doesn't conflict weirdly with previous step */
+        }
+
+        /* Specific border style for the very last dialogue box */
+        .new-dialogue-step.step-right .dialogue-box {
+            border-style: solid; /* Change border to solid */
+            /* Inherits width and color from .step-right .dialogue-box */
+        }
+
+        /* Styling for the text inside the final prompt box */
+        .new-dialogue-step.step-right .dialogue-box .final-prompt-text {
+            font-style: normal; /* Override italic if inherited */
+            font-size: 1.2rem; /* Adjust size as needed */
+            color: #262626; /* Darker text */
+            margin-bottom: 1rem;
+            text-align: center; /* Center align the text */
+            line-height: 1.5;
+        }
+
+        /* Container for the final post button */
+        .final-post-button-container {
+            margin-top: 2rem;
+            text-align: center;
+        }
+
+        /* Styling for the final post button - similar to deleted .post-button */
+        .final-post-button-container button {
+            background: linear-gradient(45deg, #ff00ff, #00ffff); /* Gradient */
+            color: white;
+            border: none;
+            padding: 15px 30px;
+            border-radius: 25px; /* Rounded corners */
+            font-size: 18px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 0 20px rgba(255, 0, 255, 0.5); /* Glow effect */
+        }
+
+        .final-post-button-container button:hover {
+            box-shadow: 0 0 30px rgba(255, 0, 255, 0.8); /* Increased glow on hover */
+            transform: scale(1.05); /* Slight scale on hover */
+        }
+
+        /* Tooltip Styles */
+        .username-tooltip {
+            position: absolute;
+            top: 0;
+            left: 0;
+            /* background-color: rgba(0, 0, 0, 0.8); */
+            background-color: rgba(50, 50, 50, 0.85); /* Softer dark background */
+            color: #fff;
+            /* padding: 5px 10px; */
+            padding: 4px 8px; /* Smaller padding */
+            border-radius: 4px; /* Slightly smaller radius */
+            font-size: 0.8rem; /* Smaller font size */
+            z-index: 1002;
+            display: none;
+            white-space: nowrap; /* Prevent line breaks */
+            box-shadow: 0 1px 3px rgba(0,0,0,0.2); /* Subtle shadow */
+        }
+
+        .content-box {
+            padding: 2rem;
+            border-radius: 8px;
+            max-width: 100%;
+            text-align: center;
+            opacity: 1; /* 直接显示，移除渐变效果 */
+            transform: none; /* 移除位移效果 */
+            transition: none; /* 移除过渡效果 */
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .content-box.active {
+            opacity: 1;
+            transform: none;
+        }
+
+        .text-content {
+            color: #FFF8DC; /* cornsilk */
+            font-size: 18px;
+            line-height: 1.8;
+            text-align: center;
+            width: 45vw;
+            min-width: 300px;
+            max-width: 800px;
+            margin: 0 auto;
+            position: relative;
+            top: auto;
+            left: auto;
+            transform: none;
+            z-index: 9999;  /* 提高层级到最高 */
+            opacity: 1; /* 直接显示，移除渐变效果 */
+            transition: none; /* 移除过渡效果 */
+            padding: 5px;
+            box-sizing: border-box;
+            background: rgba(0, 0, 0, 0.4);
+            backdrop-filter: blur(6px);
+            border-radius: 12px;
+            box-shadow: 0 0 20px rgba(0, 0, 0, 0.2);
+            font-family: 'Manrope', sans-serif;
+        }
+
+        .text-content.active {
+            opacity: 1;
+        }
+    </style>
+</head>
+<body>
+    <!-- Tooltip Element (Initially Hidden) -->
+    <div id="username-tooltip" class="username-tooltip"></div>
+
+    <div class="scroll-hint">↓ Scroll through the story to begin the interaction ↓</div>
+    <div class="scroll-container">
+        <!-- 第一页 -->
+        <div class="scroll-section">
+            <div class="comic-page">
+                <div class="story-title-header">
+                    <div class="title-text">Scene1: Posting</div>
+                    <div class="header-user-info">
+                        <div class="header-user-details">
+                            <div class="header-username">she.was.online</div>
+                            <div class="header-story-time">5 months ago</div>
+                        </div>
+                    </div>
+                </div>
+                <div class="comic-container">
+                    <img src="./scene1/assets/1.1.webp" alt="漫画第一页" class="comic-image">
+                </div>
+            </div>
+        </div>
+
+        <!-- 第二页 -->
+        <div class="video-fixed-container">
+            <div class="comic-page">
+                <div class="comic-container">
+                    <div class="panels-container">
+                        <div class="panel">
+                            <video autoplay loop muted playsinline>
+                                <source src="./scene1/assets/2.2.mp4" type="video/mp4">
+                            </video>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 对话框容器 -->
+        <div class="dialogues-container">
+            <div class="step">
+                <div class="dialogue-box">
+                    <div class="content">
+                        oat latte + my fav hoodie <span class="emoji">☁</span><br>
+                        comfort is the aesthetic <span class="emoji">🎀</span>
+                    </div>
+                    <div class="hashtags">
+                        #thatgirlaesthetic #pinkaesthetic
+                    </div>
+                    <div class="instagram-actions">
+                        <div class="left-actions">
+                            <i class="far fa-heart"></i>
+                            <i class="far fa-comment"></i>
+                            <i class="far fa-paper-plane"></i>
+                        </div>
+                        <i class="far fa-bookmark"></i>
+                    </div>
+                    <div class="likes-count">3,355 likes</div>
+                    <div class="view-comments">157 comments</div>
+                </div>
+            </div>
+            <div class="step">
+                <div class="dialogue-box">
+                    <div class="content">
+                        You don't have to be perfect to begin <span class="emoji">✨</span><br>
+                        10-min walk or a meal — it all adds up <span class="emoji">🤍</span><span class="emoji">💗</span>
+                    </div>
+                    <div class="hashtags">
+                        #thatgirl #selfcare
+                    </div>
+                    <div class="instagram-actions">
+                        <div class="left-actions">
+                            <i class="far fa-heart"></i>
+                            <i class="far fa-comment"></i>
+                            <i class="far fa-paper-plane"></i>
+                        </div>
+                        <i class="far fa-bookmark"></i>
+                    </div>
+                    <div class="likes-count">284 likes</div>
+                    <div class="view-comments">12 comments</div>
+                </div>
+            </div>
+            <div class="step">
+                <div class="dialogue-box">
+                    <div class="content">
+                        Wednesday vibes <br>
+                        kinda productive lol <span class="emoji">☕️</span><br>
+                        still chasing that to-do list <span class="emoji">🎀</span>
+                    </div>
+                    <div class="hashtags">
+                        #morningroutine #thatgirlroutine
+                    </div>
+                    <div class="instagram-actions">
+                        <div class="left-actions">
+                            <i class="far fa-heart"></i>
+                            <i class="far fa-comment"></i>
+                            <i class="far fa-paper-plane"></i>
+                        </div>
+                        <i class="far fa-bookmark"></i>
+                    </div>
+                    <div class="likes-count">312 likes</div>
+                    <div class="view-comments">89 comments</div>
+                </div>
+            </div>
+            <div class="step">
+                <div class="dialogue-box">
+                    <div class="content">
+                       	you are that girl, just in your way  <span class="emoji">💗</span>
+                    </div>
+                    <div class="hashtags">
+                        #thatgirl #wellness #healthylifestyle
+                    </div>
+                    <div class="instagram-actions">
+                        <div class="left-actions">
+                            <i class="far fa-heart"></i>
+                            <i class="far fa-comment"></i>
+                            <i class="far fa-paper-plane"></i>
+                        </div>
+                        <i class="far fa-bookmark"></i>
+                    </div>
+                    <div class="likes-count">296 likes</div>
+                    <div class="view-comments">13 comments</div>
+                </div>
+            </div>
+            <div class="step step-right">
+                <div class="dialogue-box">
+                    <div class="content">
+                        Positive. Disciplined. Aesthetic.<br>
+                        Through social media, I watched "that girl".<br>
+                        Every part of her life seemed effortless.<br>
+                        <br>
+                        It made me wonder — could I do it too?
+                    </div>
+                </div>
+            </div>
+            <!-- New Dialogue Step -->
+            <div class="step new-dialogue-step step-right">
+                <div class="dialogue-box">
+                    <div class="final-prompt-text">Ready to share your first post?</div>
+                    <div class="final-prompt-text">Let's see what your version of "that girl" looks like</div>
+                    <div class="final-post-button-container">
+                        <button>Make my first post</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Hashtag p5.js Canvas Container -->
+        <div id="hashtag-canvas"></div>
+    </div>
+
+    <script>
+        // Scene1: Posting 背景动态效果 - UI Hexagon Bubble
+        let bubbles = [];
+        let p5CanvasContainer; // Store reference to the container
+        let scroller; // Declare scroller in a higher scope
+
+        function setup() {
+            p5CanvasContainer = document.getElementById('p5-canvas'); // Get the container
+            let canvas = createCanvas(p5CanvasContainer.clientWidth, p5CanvasContainer.clientHeight); // Use container dimensions
+            canvas.parent('p5-canvas');
+            noStroke();
+            for (let i = 0; i < 25; i++) {
+                bubbles.push(new Bubble());
+            }
+        }
+
+        function draw() {
+            clear(); // 确保透明背景
+            for (let b of bubbles) {
+                b.update();
+                b.display();
+            }
+        }
+
+        class Bubble {
+            constructor() {
+                this.reset();
+            }
+
+            reset() {
+                this.x = random(width);
+                this.y = random(height);
+                this.size = random(20, 60);
+                this.speed = random(0.2, 0.5);
+                this.offset = random(TWO_PI);
+                this.alpha = random(40, 100);
+                this.color = color(random(150, 190), random(160, 200), 255, this.alpha); // 淡蓝紫色
+            }
+
+            update() {
+                this.y -= this.speed;
+                this.x += sin(frameCount * 0.01 + this.offset) * 0.3;
+                if (this.y < -this.size) {
+                    this.y = height + this.size;
+                    this.x = random(width);
+                }
+            }
+
+            display() {
+                push();
+                translate(this.x, this.y);
+                rotate(PI / 6);
+                fill(this.color);
+                beginShape();
+                for (let i = 0; i < 6; i++) {
+                    let angle = TWO_PI / 6 * i;
+                    let vx = cos(angle) * this.size;
+                    let vy = sin(angle) * this.size;
+                    vertex(vx, vy);
+                }
+                endShape(CLOSE);
+                pop();
+            }
+        }
+
+        function windowResized() {
+            if (p5CanvasContainer) { // Check if container exists
+                 resizeCanvas(p5CanvasContainer.clientWidth, p5CanvasContainer.clientHeight); // Use container dimensions
+                 // 重新调整所有气泡的位置
+                 for (let b of bubbles) {
+                     b.reset(); // Reset bubbles to fit the new canvas size
+                 }
+            }
+
+            // 调整主窗口大小时，不需要在这里手动调整hashtag画布
+            // hashtagSketch会通过自己的windowResized方法响应
+            
+            // Tell scrollama to recalculate positions
+            if (scroller) { // Check if scroller is initialized
+                scroller.resize();
+            }
+        }
+
+        // --- Hashtag p5.js Sketch --- (Instance Mode)
+        let hashtagSketch;
+        const hashtagSketchContainer = document.getElementById('hashtag-canvas');
+
+        const hashtagP5 = ( sketch ) => {
+            let hashtags = [];
+            let hashtagTexts = ['#thatgirl', '#thatgirlaesthetic', '#healthylifestyle', '#morningroutine', '#wellness', '#selfcare', '#lifestyle', '#thatgirlroutine', '#wellnessjourney', '#thatgirllifestyle'];
+            let canvasWidth, canvasHeight;
+
+            sketch.setup = () => {
+                // 获取容器宽高，确保在iframe中也能正确获取
+                canvasWidth = window.innerWidth;
+                canvasHeight = window.innerHeight;
+                
+                let canvas = sketch.createCanvas(canvasWidth, canvasHeight);
+                canvas.parent('hashtag-canvas');
+                sketch.textFont('Manrope'); // Set the font to Manrope
+                sketch.textSize(20);
+                sketch.textAlign(sketch.CENTER, sketch.CENTER);
+                // Removed fill, using fill in display
+                sketch.noStroke();
+
+                for (let i = 0; i < 15; i++) {
+                    hashtags.push(new Hashtag());
+                }
+                sketch.noLoop(); // Start paused
+            };
+
+            sketch.draw = () => {
+                sketch.clear(); // transparent background for layering
+                for (let h of hashtags) {
+                    h.update();
+                    h.display();
+                }
+            };
+
+            class Hashtag {
+                constructor() {
+                    this.reset(true);
+                }
+
+                reset(initial = false) {
+                    // 使用canvasWidth而不是sketch.width，确保在iframe中正确定位
+                    this.x = sketch.random(canvasWidth);
+                    this.y = initial ? sketch.random(canvasHeight) : canvasHeight + sketch.random(50, 100);
+                    this.speed = sketch.random(0.5, 1.5);
+                    this.alpha = sketch.random(100, 200);
+                    this.txt = sketch.random(hashtagTexts);
+                    this.size = sketch.random(16, 24);
+                }
+
+                update() {
+                    this.y -= this.speed;
+                    if (this.y < -20) this.reset();
+                }
+
+                display() {
+                    sketch.fill(90, 110, 200, this.alpha);
+                    sketch.textSize(this.size);
+                    sketch.text(this.txt, this.x, this.y);
+                }
+            }
+            
+            // 添加窗口大小变化响应函数
+            sketch.windowResized = () => {
+                canvasWidth = window.innerWidth;
+                canvasHeight = window.innerHeight;
+                sketch.resizeCanvas(canvasWidth, canvasHeight);
+                
+                // 重置所有hashtag位置以适应新画布大小
+                hashtags.forEach(h => h.reset(true));
+            };
+        };
+
+        window.addEventListener('load', () => {
+            document.body.classList.add('loaded');
+            // Initialize the hashtag sketch after load
+            hashtagSketch = new p5(hashtagP5);
+        });
+
+        document.addEventListener('DOMContentLoaded', () => {
+            // Check if scrollama is loaded before initializing
+            if (typeof scrollama === 'function') {
+                scroller = scrollama(); // Initialize the higher-scoped scroller
+                const steps = document.querySelectorAll('.step');
+                const video = document.querySelector('video');
+                const videoContainer = document.querySelector('.video-fixed-container');
+                const dialoguesContainer = document.querySelector('.dialogues-container');
+                const firstPage = document.querySelector('.scroll-section:first-child');
+                const secondPage = document.querySelector('.video-fixed-container');
+                const hashtagCanvasContainer = document.getElementById('hashtag-canvas');
+                const scrollHint = document.querySelector('.scroll-hint'); // Get scroll hint element
+                const storyTitleHeader = document.querySelector('.story-title-header'); // Get the single header
+                let hashtagEffectActive = false; // Flag to track hashtag effect state
+                let scrollLogicInitialized = false; // Flag to prevent multiple initializations
+
+                // --- Define scroll handling and initialization logic --- 
+                const handleScroll = () => {
+                    const scrollPosition = window.scrollY;
+                    const firstPageTop = firstPage.offsetTop; // Should be 0
+                    const firstPageBottom = firstPageTop + window.innerHeight;
+
+                    // Control header visibility
+                    if (storyTitleHeader) { // Check if header exists
+                        if (scrollPosition >= firstPageBottom) {
+                            // We are in the second page (video/dialogues) area or beyond
+                            storyTitleHeader.style.display = 'none';
+                        } else {
+                            // We are in the first page area
+                            storyTitleHeader.style.display = 'flex';
+                        }
+                    }
+
+                    // 控制第二页视频的显示
+                    if (scrollPosition >= firstPageBottom) { // Video active when past first page
+                        secondPage.classList.add('active');
+                        dialoguesContainer.classList.add('active');
+                        if (video.paused) {
+                            video.play().catch(error => console.log('Video play failed:', error));
+                        }
+                    } else {
+                        secondPage.classList.remove('active');
+                        dialoguesContainer.classList.remove('active');
+                        video.pause();
+
+                        // Deactivate hashtag effect if scrolling out of second page section
+                        if (hashtagEffectActive) {
+                            hashtagCanvasContainer.classList.remove('active');
+                            if (hashtagSketch && hashtagSketch.isLooping()) {
+                                hashtagSketch.noLoop();
+                            }
+                            hashtagEffectActive = false;
+                        }
+                    }
+
+                    // Remove video container positioning logic dependent on thirdPageTop
+                    if (videoContainer.style.position !== 'fixed') {
+                         videoContainer.style.position = 'fixed';
+                         videoContainer.style.top = '0';
+                    }
+
+                    // Control scroll hint visibility
+                    if (scrollHint) {
+                        const bottomReached = window.scrollY + window.innerHeight >= document.documentElement.scrollHeight - 5; // Check if near bottom (5px tolerance)
+                        scrollHint.style.display = bottomReached ? 'none' : 'block';
+                    }
+
+                    // Control heart icons based on dialogue box position
+                    const dialogueBoxes = document.querySelectorAll('.dialogue-box');
+                    const screenHeight40Percent = window.innerHeight * 0.4; // 40% of screen height
+                    
+                    dialogueBoxes.forEach(box => {
+                        // Skip dialogue boxes that don't have heart icons
+                        const heartIcon = box.querySelector('.fa-heart');
+                        if (!heartIcon) return;
+                        
+                        // Calculate the center point of the dialogue box
+                        const rect = box.getBoundingClientRect();
+                        const boxCenterY = rect.top + (rect.height / 2);
+                        
+                        // Check if center is above or below 40% screen height
+                        if (boxCenterY <= screenHeight40Percent) {
+                            // Center is in top 40% - filled heart
+                            heartIcon.classList.remove('far');
+                            heartIcon.classList.add('fas', 'active');
+                        } else {
+                            // Center is in bottom 60% - empty heart
+                            heartIcon.classList.remove('fas', 'active');
+                            heartIcon.classList.add('far');
+                        }
+                    });
+                };
+
+                const initializeScrollLogic = () => {
+                     if (scrollLogicInitialized) return; // Prevent running multiple times
+                     scrollLogicInitialized = true;
+                     console.log("Layout stable, initializing scroll logic...");
+
+                     // 设置第一页和第二页的scrollama (Moved here)
+                    scroller
+                        .setup({
+                            step: '.step',
+                            offset: 0.5,
+                            debug: false // 可以暂时设为 true 观察 scrollama 辅助线
+                        })
+                        .onStepEnter(response => {
+                            console.log('Scrollama: Entering step', response.index, 'Direction:', response.direction); // 添加日志
+                            const dialogueBox = response.element.querySelector('.dialogue-box');
+                            if (dialogueBox) {
+                                setTimeout(() => {
+                                    dialogueBox.classList.add('active');
+                                }, 100);
+                            }
+                            // Activate hashtag effect on entering the first step
+                            if (response.index === 0 && !hashtagEffectActive) {
+                                hashtagCanvasContainer.classList.add('active');
+                                if (hashtagSketch) hashtagSketch.loop();
+                                hashtagEffectActive = true;
+                            }
+                            // Deactivate hashtag effect on entering the fifth step (index 4)
+                            if (response.index === 4 && hashtagEffectActive) {
+                                hashtagCanvasContainer.classList.remove('active');
+                                if (hashtagSketch) hashtagSketch.noLoop();
+                                hashtagEffectActive = false;
+                            }
+                        })
+                        .onStepExit(response => {
+                            const dialogueBox = response.element.querySelector('.dialogue-box');
+                            if (dialogueBox) {
+                                dialogueBox.classList.remove('active');
+                            }
+                            // Deactivate hashtag effect on exiting the first step upwards
+                            if (response.index === 0 && response.direction === 'up' && hashtagEffectActive) {
+                                hashtagCanvasContainer.classList.remove('active');
+                                if (hashtagSketch) hashtagSketch.noLoop();
+                                hashtagEffectActive = false;
+                            }
+                            // Reactivate hashtag effect on exiting the fifth step upwards
+                            if (response.index === 4 && response.direction === 'up' && !hashtagEffectActive) {
+                                // Check if we are still within the second page scroll area
+                                const scrollPosition = window.scrollY;
+                                const firstPageBottom = firstPage.offsetTop + window.innerHeight;
+                                const thirdPageTopCheck = secondPage.offsetTop; // Use a different name if needed
+                                if (scrollPosition >= firstPageBottom && scrollPosition < thirdPageTopCheck) {
+                                    hashtagCanvasContainer.classList.add('active');
+                                    if (hashtagSketch) hashtagSketch.loop();
+                                    hashtagEffectActive = true;
+                                }
+                            }
+                        });
+
+                    scroller.resize(); // 确保初始触发正确
+
+                     // 添加滚动节流 (Moved here)
+                    let ticking = false;
+                    window.addEventListener('scroll', () => {
+                        if (!ticking) {
+                            window.requestAnimationFrame(() => {
+                                handleScroll();
+                                ticking = false;
+                            });
+                            ticking = true;
+                        }
+                    });
+                };
+                // --- End define scroll handling --- 
+
+                // --- Wait for stable layout before initializing --- 
+                let checkAttempts = 0;
+                const maxCheckAttempts = 100; // Approx 1.6 seconds max wait
+                function checkLayoutAndInitialize() {
+                    const currentSecondPageTop = secondPage.offsetTop;
+                    console.log(`Layout Check Attempt ${checkAttempts + 1}: secondPageTop = ${currentSecondPageTop}`);
+
+                    if (currentSecondPageTop > 0 && !scrollLogicInitialized) {
+                        initializeScrollLogic();
+                    } else if (checkAttempts < maxCheckAttempts && !scrollLogicInitialized) {
+                        checkAttempts++;
+                        requestAnimationFrame(checkLayoutAndInitialize);
+                    } else if (!scrollLogicInitialized){
+                        console.warn("Layout did not stabilize (secondPageTop remained 0). Initializing scroll logic anyway.");
+                        initializeScrollLogic(); // Fallback: Initialize anyway after max attempts
+                    }
+                }
+
+                requestAnimationFrame(checkLayoutAndInitialize);
+                // --- End wait for stable layout --- 
+
+                // Tooltip Logic
+                const userInfoContainer = document.querySelector('.header-user-info'); // Target the container
+                const tooltipElement = document.getElementById('username-tooltip');
+
+                if (userInfoContainer && tooltipElement) { 
+                    userInfoContainer.addEventListener('mouseenter', (event) => { 
+                        const rect = userInfoContainer.getBoundingClientRect(); // Get container's rect
+                        const tooltipText = "You're revisiting a memory from she.was.online — from 5 months ago.";
+                        
+                        tooltipElement.innerHTML = tooltipText;
+                        tooltipElement.style.display = 'block'; // Show first to measure width
+                        
+                        // Get tooltip dimensions AFTER displaying it
+                        const tooltipRect = tooltipElement.getBoundingClientRect();
+
+                        // Position tooltip centered below the container
+                        tooltipElement.style.top = `${rect.bottom + window.scrollY + 5}px`; 
+                        // Calculate centered left position based on container
+                        tooltipElement.style.left = `${rect.left + window.scrollX + (rect.width / 2) - (tooltipRect.width / 2)}px`; 
+                    });
+
+                    userInfoContainer.addEventListener('mouseleave', () => { 
+                        tooltipElement.style.display = 'none';
+                    });
+                }
+
+                // 处理视频播放
+                const observer = new IntersectionObserver((entries) => {
+                    entries.forEach(entry => {
+                        if (entry.isIntersecting) {
+                            video.play().catch(error => {
+                                console.log('Video play failed:', error);
+                                // 如果自动播放失败，添加播放按钮
+                                video.controls = true;
+                            });
+                        } else {
+                            video.pause();
+                        }
+                    });
+                }, { threshold: 0.5 });
+
+                if (video) { // Add check before observing
+                    observer.observe(video);
+                } else {
+                    console.warn("Video element not found, IntersectionObserver not attached.");
+                }
+
+                // 页面可见性变化时处理视频
+                document.addEventListener('visibilitychange', () => {
+                    if (document.hidden) {
+                        video.pause();
+                    } else if (secondPage.classList.contains('active')) {
+                        video.play().catch(error => {
+                            console.log('Video play failed:', error);
+                        });
+                    }
+                });
+
+                // 确保视频可以自动播放
+                video.addEventListener('loadedmetadata', () => {
+                    if (secondPage.classList.contains('active')) {
+                        video.play().catch(error => {
+                            console.log('Video play failed:', error);
+                        });
+                    }
+                });
+
+                // 添加点赞功能
+                document.querySelectorAll('.fa-heart').forEach(heart => {
+                    heart.addEventListener('click', function() {
+                        this.classList.toggle('fas');
+                        this.classList.toggle('far');
+                        this.classList.toggle('active');
+                    });
+                });
+
+                // 添加保存功能
+                document.querySelectorAll('.fa-bookmark').forEach(bookmark => {
+                    bookmark.addEventListener('click', function() {
+                        this.classList.toggle('fas');
+                        this.classList.toggle('far');
+                    });
+                });
+
+                // Add click event for the final "Make my first post" button
+                const finalPostButton = document.querySelector('.final-post-button-container button');
+                if (finalPostButton) {
+                    finalPostButton.addEventListener('click', () => {
+                        // Add fade out effect
+                        document.body.style.transition = 'opacity 0.3s ease';
+                        document.body.style.opacity = '0';
+                        
+                        // Delay redirection to allow fade-out to complete
+                        setTimeout(() => {
+                            window.location.href = 'scene1/instagram_original.html';
+                        }, 300);
+                    });
+                }
+            } else {
+                // Scrollama not loaded - handle error
+                console.error("Scrollama library failed to load. Scroll-triggered animations will not work.");
+                // Optionally, hide elements that depend on scrollama or show a message
+                if (dialoguesContainer) dialoguesContainer.style.opacity = 1; // Make dialogues visible anyway?
+                if (videoContainer) videoContainer.style.opacity = 1; // Make video visible anyway?
+            }
+
+            // Ensure video initial state (Moved from second listener)
+            // Moved the check outside the if block, in case video is not defined when scrollama fails
+            const video = document.querySelector('video');
+            const secondPage = document.querySelector('.video-fixed-container');
+            if (video) video.pause(); 
+            if (secondPage) secondPage.classList.remove('active'); 
+        });
+    </script>
+</body>
+</html> 

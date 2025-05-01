@@ -1,0 +1,1243 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Instagram 风格展示</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Cookie&display=swap" rel="stylesheet">
+    <!-- Add Manrope Font -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@300;400;500;600&display=swap" rel="stylesheet">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.4.0/p5.js"></script>
+    <style>
+        body {
+            background-image: url('./assets/background_.webp');
+            background-size: 60% auto;
+            background-position: left bottom;
+            background-attachment: fixed;
+            background-repeat: no-repeat;
+            font-family: 'Manrope', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            min-height: 100vh;
+            padding: 20px;
+            padding-top: 80px; /* 为导航栏留出空间 */
+        }
+
+        @keyframes slideInFromLeft {
+            from {
+                transform: translateX(-100%);
+                opacity: 0;
+            }
+
+            to {
+                transform: translateX(0);
+                opacity: 1;
+            }
+        }
+
+        .monologue {
+            position: fixed;
+            top: 6rem;
+            left: 15%;
+            width: 450px;
+            max-width: 450px;
+            font-size: 1.1rem;
+            color: #333;
+            background-color: rgba(255, 255, 255, 0.9);
+            padding: 1.5rem;
+            border-radius: 15px;
+            border: 3px dashed #a0b4c8;
+            line-height: 1.7;
+            font-style: italic;
+            animation: slideInFromLeft 0.5s ease-out;
+            position: relative;
+            box-shadow: none;
+        }
+
+        .monologue::before {
+            content: '"'; /* Opening quote */
+            position: absolute;
+            top: -30px; /* Position higher */
+            left: -25px;
+            font-family: serif; /* Use a serif font for quotes */
+            font-size: 8rem; /* Larger size */
+            color: rgba(160, 180, 200, 0.5); /* More visible - higher opacity */
+            z-index: 1; /* Place on top of content */
+            line-height: 1;
+            text-shadow: 1px 1px 2px rgba(0,0,0,0.1); /* Add slight shadow for depth */
+        }
+
+        @keyframes slideInFromRight {
+            from {
+                transform: translateX(100%);
+                opacity: 0;
+            }
+
+            to {
+                transform: translateX(0);
+                opacity: 1;
+            }
+        }
+
+        .container {
+            max-width: 470px;
+            margin: -50px 2% 0 auto;
+            padding: 20px;
+            backdrop-filter: blur(5px);
+            border-radius: 16px;
+            background-color: rgba(250, 250, 250, 0.8);
+            animation: slideInFromRight 0.5s ease-out;
+        }
+
+        .instructions {
+            background-color: rgba(255, 255, 255, 0.9);
+            border-radius: 8px;
+            padding: 15px;
+            margin-bottom: 15px;
+            border-left: 4px solid #6494b7;
+            font-size: 14px;
+            line-height: 1.5;
+        }
+
+        .instructions h3 {
+            margin-top: 0;
+            margin-bottom: 10px;
+            color: #6494b7;
+            font-size: 16px;
+        }
+
+        .instructions ol {
+            margin: 0;
+            padding-left: 20px;
+        }
+
+        .instructions li {
+            margin-bottom: 5px;
+        }
+
+        .instagram-post {
+            max-height: 0;
+            background: white;
+            border: 1px solid #dbdbdb;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+            transition: max-height 0.3s ease-out;
+            overflow: hidden;
+        }
+
+        .post-header {
+            display: flex;
+            align-items: center;
+            padding: 14px 16px;
+            border-bottom: 1px solid #efefef;
+        }
+
+        .profile-pic {
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            margin-right: 12px;
+            background-color: #f0f0f0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .profile-pic img {
+            width: 100%;
+            height: 100%;
+            border-radius: 50%;
+            object-fit: cover;
+        }
+
+        .profile-info {
+            flex-grow: 1;
+        }
+
+        .profile-name {
+            font-weight: 600;
+            font-size: 14px;
+            margin: 0;
+        }
+
+        .profile-location {
+            font-size: 12px;
+            color: #8e8e8e;
+            margin: 0;
+        }
+
+        .post-content {
+            padding: 16px;
+            border-bottom: 1px solid #efefef;
+            white-space: pre-wrap;
+            font-size: 14px;
+            line-height: 1.5;
+        }
+
+        .post-actions {
+            padding: 8px 16px;
+            display: flex;
+            align-items: center;
+            gap: 16px;
+        }
+
+        .action-icon {
+            color: #262626;
+            font-size: 24px;
+            cursor: pointer;
+        }
+
+        .action-icon:hover {
+            color: #8e8e8e;
+        }
+
+        .action-count {
+            font-size: 14px;
+            color: #262626;
+            margin-left: 5px;
+            display: none;
+        }
+
+        .action-wrapper {
+            display: flex;
+            align-items: center;
+        }
+
+        .action-wrapper.active {
+            animation: scaleLoop 1s infinite ease-in-out;
+        }
+
+        .action-wrapper.active .action-icon {
+            color: #ed4956;
+        }
+
+        .action-wrapper.active .fa-comment {
+            color: #0095f6;
+        }
+
+        @keyframes scaleLoop {
+            0%,
+            100% {
+                transform: scale(0.9);
+            }
+
+            50% {
+                transform: scale(1.1);
+            }
+        }
+
+        .bookmark {
+            margin-left: auto;
+        }
+
+        .input-section {
+            background: white;
+            border: 1px solid #dbdbdb;
+            border-radius: 8px;
+            padding: 16px;
+            margin-bottom: 20px;
+            box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+        }
+
+        .form-control {
+            border: 1px solid #dbdbdb;
+            border-radius: 4px;
+            resize: none;
+            font-size: 14px;
+            padding: 12px;
+        }
+
+        .radio-group {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            padding: 12px;
+            border: 1px solid #dbdbdb;
+            border-radius: 4px;
+            margin-bottom: 1rem;
+            min-height: 96px;
+        }
+
+        .radio-option {
+            display: flex;
+            align-items: flex-start;
+            gap: 8px;
+            cursor: pointer;
+        }
+
+        .radio-option input[type="radio"] {
+            margin-top: 3px;
+        }
+
+        .radio-option label {
+            font-size: 14px;
+            line-height: 1.5;
+            margin: 0;
+            cursor: pointer;
+        }
+
+        .btn-post {
+            background-color: #0095f6;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            padding: 8px 16px;
+            font-weight: 600;
+            width: 100%;
+            transition: background-color 0.2s ease;
+        }
+
+        .btn-post:hover {
+            background-color: #0081d6;
+        }
+
+        .post-image {
+            width: 100%;
+            position: relative;
+            padding-bottom: 100%;
+            /* 1:1 宽高比 */
+            overflow: hidden;
+            border-bottom: 1px solid #efefef;
+        }
+
+        .post-image img {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .comments-section {
+            position: fixed;
+            top: 0;
+            right: 0;
+            width: 400px;
+            height: 100vh;
+            background: white;
+            box-shadow: -2px 0 10px rgba(0, 0, 0, 0.1);
+            transform: translateX(100%);
+            transition: transform 0.3s ease;
+            z-index: 1000;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .comments-section.active {
+            transform: translateX(0);
+        }
+
+        .comments-header {
+            padding: 16px;
+            border-bottom: 1px solid #dbdbdb;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .comments-header h3 {
+            margin: 0;
+            font-size: 16px;
+            font-weight: 600;
+        }
+
+        .close-comments {
+            background: none;
+            border: none;
+            font-size: 24px;
+            cursor: pointer;
+            color: #262626;
+            animation: scaleLoop 1s infinite ease-in-out;
+        }
+
+        .comments-content {
+            flex: 1;
+            overflow-y: auto;
+            padding: 16px;
+        }
+
+        .comment {
+            display: flex;
+            gap: 12px;
+            margin-bottom: 16px;
+        }
+
+        .comment-user {
+            font-weight: 600;
+            font-size: 14px;
+        }
+
+        .comment-text {
+            font-size: 14px;
+            margin: 0;
+        }
+
+        .comment-profile-pic {
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            background-color: #f0f0f0;
+        }
+
+        .platform-suggestion {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: white;
+            padding: 24px;
+            border-radius: 12px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+            width: 90%;
+            max-width: 400px;
+            text-align: center;
+            display: none;
+            z-index: 2000;
+        }
+
+        .platform-suggestion p {
+            font-size: 16px;
+            color: #262626;
+            margin-bottom: 20px;
+            line-height: 1.4;
+        }
+
+        .suggestion-buttons {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .suggestion-button {
+            padding: 12px 20px;
+            border: none;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background-color 0.2s ease;
+        }
+
+        .primary-button {
+            background-color: #0095f6;
+            color: white;
+        }
+
+        .primary-button:hover {
+            background-color: #0081d6;
+        }
+
+        .secondary-button {
+            background-color: #f0f0f0;
+            color: #262626;
+        }
+
+        .secondary-button:hover {
+            background-color: #e0e0e0;
+        }
+
+        /* 添加珊瑚粉按钮样式 */
+        .coral-button {
+            background-color: #f78ca2;
+            color: white;
+        }
+
+        .coral-button:hover {
+            background-color: #e0748a;
+        }
+
+        .optimization-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(255, 255, 255, 0.98);
+            display: none;
+            justify-content: center;
+            align-items: center;
+            z-index: 3000;
+            font-family: "SF Mono", "Consolas", monospace;
+        }
+
+        .optimization-content {
+            max-width: 500px;
+            width: 90%;
+        }
+
+        .optimization-header {
+            color: #1c1c1c;
+            font-size: 18px;
+            margin-bottom: 30px;
+            opacity: 0;
+            transform: translateY(20px);
+            transition: all 0.5s ease;
+        }
+
+        .optimization-step {
+            display: flex;
+            align-items: center;
+            margin: 15px 0;
+            opacity: 0;
+            transform: translateY(20px);
+            transition: all 0.5s ease;
+        }
+
+        .step-icon {
+            width: 24px;
+            height: 24px;
+            margin-right: 15px;
+            position: relative;
+        }
+
+        .step-icon::before {
+            content: "→";
+            color: #0095f6;
+            font-size: 18px;
+        }
+
+        .step-text {
+            color: #262626;
+            font-size: 16px;
+        }
+
+        .optimization-step.active {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        .optimization-header.active {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        .nav-bar {
+            position: fixed;
+            bottom: 2rem;
+            left: 2rem;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            z-index: 1000;
+        }
+
+        .nav-button {
+            padding: 10px 20px;
+            border-radius: 8px;
+            font-weight: 600;
+            font-size: 14px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            width: 160px;
+            text-align: left;
+        }
+
+        .nav-button.active {
+            background-color: #0095f6;
+            color: white;
+        }
+
+        .nav-button.inactive {
+            background-color: #f0f0f0;
+            color: #262626;
+        }
+
+        .nav-button.inactive:hover {
+            background-color: #e0e0e0;
+        }
+
+        .story-title-header {
+            position: fixed;
+            top: 2rem;
+            left: 2rem;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            color: #fff;
+            z-index: 1001;
+        }
+
+        .title-text {
+            font-family: 'Cookie', cursive;
+            font-size: 32px;
+            padding: 10px 20px;
+            background: #6494b7;
+            border-radius: 10px;
+            height: 60px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .header-user-info {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 10px 20px;
+            background: #6494b7;
+            border-radius: 10px;
+            height: 60px;
+        }
+
+        .header-user-avatar {
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            object-fit: cover;
+        }
+
+        .header-user-details {
+            color: #fff;
+        }
+
+        .header-username {
+            font-weight: 600;
+            font-size: 14px;
+        }
+
+        .header-story-time {
+            font-size: 12px;
+            opacity: 0.8;
+        }
+
+        .slider-container {
+            width: 100%;
+            margin-bottom: 20px;
+            background: white;
+            border: 1px solid #dbdbdb;
+            border-radius: 8px;
+            padding: 16px;
+            box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 10px;
+            position: relative;
+        }
+
+        .slider-container::after {
+            content: "← Slide to select style →";
+            position: absolute;
+            bottom: -22px;
+            left: 50%;
+            transform: translateX(-50%);
+            color: #0095f6;
+            font-size: 12px;
+            font-weight: bold;
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0% { opacity: 0.7; }
+            50% { opacity: 1; }
+            100% { opacity: 0.7; }
+        }
+
+        .slider-button {
+            padding: 8px 16px;
+            border-radius: 4px;
+            font-weight: 600;
+            font-size: 14px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            white-space: nowrap;
+        }
+
+        .slider-button.active {
+            background-color: #0095f6;
+            color: white;
+        }
+
+        .slider-button.inactive {
+            background-color: #f0f0f0;
+            color: #262626;
+        }
+
+        .slider-button.inactive:hover {
+            background-color: #e0e0e0;
+        }
+
+        .slider-wrapper {
+            flex: 1;
+            position: relative;
+            width: 100%;
+            padding: 0 10px;
+        }
+
+        .slider {
+            width: 100%;
+            height: 8px;
+            -webkit-appearance: none;
+            background: var(--natural-gradient);
+            outline: none;
+            border-radius: 4px;
+            margin: 20px 0;
+            cursor: pointer;
+        }
+
+        .slider::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            width: 28px;
+            height: 28px;
+            background: white;
+            border: 3px solid var(--natural-color);
+            border-radius: 50%;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+        }
+
+        .slider::-webkit-slider-thumb:hover {
+            transform: scale(1.15);
+            box-shadow: 0 3px 8px rgba(0, 0, 0, 0.3);
+        }
+
+        .slider-labels {
+            display: flex;
+            justify-content: space-between;
+            width: 100%;
+            font-size: 14px;
+            font-weight: bold;
+            color: #262626;
+            margin-bottom: 5px;
+        }
+
+        .slider-label {
+            padding: 5px 10px;
+            border-radius: 15px;
+            background-color: #f0f0f0;
+            transition: all 0.3s ease;
+            width: 48%; /* 设置宽度接近一半 */
+            text-align: center; /* 文字居中 */
+        }
+
+        .slider-label.active {
+            background-color: var(--natural-color);
+            color: white;
+        }
+
+        .slider-label.platform-active {
+            background-color: var(--platform-color);
+            color: white;
+        }
+
+        .slider-tooltip {
+            position: absolute;
+            top: 65px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(0, 0, 0, 0.8);
+            color: white;
+            padding: 8px 12px;
+            border-radius: 4px;
+            font-size: 12px;
+            white-space: nowrap;
+            opacity: 0;
+            transition: opacity 0.5s ease;
+            pointer-events: none;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .slider-tooltip.active {
+            opacity: 1;
+            pointer-events: auto;
+        }
+
+        .confirm-button {
+            background-color: #0095f6;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            padding: 4px 12px;
+            font-size: 12px;
+            cursor: pointer;
+            transition: background-color 0.2s ease;
+        }
+
+        .confirm-button:hover {
+            background-color: #0081d6;
+        }
+
+        #p5-canvas-container {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: -1; /* Behind other content */
+            display: none; /* Initially hidden */
+        }
+
+        /* 添加平台风格颜色变量 */
+        :root {
+            --natural-color: #0095f6;
+            --natural-gradient: linear-gradient(to right, #82c0ff, #0095f6);
+            --platform-color: #f78ca2;
+            --platform-gradient: linear-gradient(to right, #ffc4d0, #f78ca2);
+        }
+    </style>
+</head>
+
+<body>
+    <div id="p5-canvas-container"></div>
+    <div class="story-title-header">
+        <div class="title-text">
+            Scene1: Posting<br>
+            <span style="font-size: 14px; font-family: Arial, sans-serif;">(Interactive Page)</span>
+        </div>
+    </div>
+    <div class="monologue">Just want to share a small piece of life in my own way...</div>
+    <div class="container">
+        <div class="instructions">
+            <h3>How to Use This Page:</h3>
+            <ol>
+                <li>Slide to switch how you say it</li>
+                <li>Write your thoughts</li>
+                <li>Post and see the difference</li>
+            </ol>
+        </div>
+        <div class="slider-container">
+            <div class="slider-wrapper">
+                <div class="slider-labels">
+                    <span class="slider-label active" id="label-natural">Natural Voice</span>
+                    <span class="slider-label" id="label-platform">Platform Style</span>
+                </div>
+                <input type="range" min="0" max="100" value="0" class="slider" id="styleSlider">
+                <div class="slider-tooltip" id="sliderTooltip"></div>
+            </div>
+        </div>
+        <div class="input-section">
+            <textarea class="form-control mb-3" id="inputText" rows="4" placeholder="Post your thoughts..."></textarea>
+            <button class="btn-post" onclick="createPost()">Post</button>
+        </div>
+
+        <div class="instagram-post" id="result-container">
+            <div class="post-header">
+                <div class="profile-pic">
+                    <img src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath fill='%23999' d='M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z'/%3E%3C/svg%3E"
+                        alt="Profile">
+                </div>
+                <div class="profile-info">
+                    <p class="profile-name">new_user_28491</p>
+                    <p class="profile-location">First post</p>
+                </div>
+            </div>
+            <div class="post-image">
+                <img src="./assets/figure2.webp" alt="Post Image">
+            </div>
+            <div class="post-content" id="result">
+            </div>
+            <div class="post-actions">
+                <div class="action-wrapper">
+                    <i class="far fa-heart action-icon"></i>
+                    <span class="action-count likes-count"></span>
+                </div>
+                <div class="action-wrapper active">
+                    <i class="far fa-comment action-icon" onclick="showPlatformSuggestion()"></i>
+                    <span class="action-count comments-count"></span>
+                </div>
+                <i class="far fa-paper-plane action-icon"></i>
+                <i class="far fa-bookmark action-icon bookmark"></i>
+            </div>
+        </div>
+    </div>
+
+    <audio id="audio-slider" src="./assets/slider.MP3" preload="auto"></audio>
+    <audio id="audio-menu-select" src="./assets/menu-select.MP3" preload="auto"></audio>
+
+    <div class="platform-suggestion" id="platform-suggestion">
+        <p>Platform hint: Adjusting your tone might boost your visibility.</p>
+        <div class="suggestion-buttons">
+            <button class="suggestion-button coral-button"
+                onclick="location.href='instagram_converter.html'">Tune My Style</button>
+        </div>
+    </div>
+
+    <div class="optimization-overlay" id="optimization-overlay">
+        <div class="optimization-content">
+            <div class="optimization-header">Optimizing your tone for platform compatibility...</div>
+            <div class="optimization-step">
+                <div class="step-icon"></div>
+                <div class="step-text">Matching platform style guide</div>
+            </div>
+            <div class="optimization-step">
+                <div class="step-icon"></div>
+                <div class="step-text">Enhancing shareability</div>
+            </div>
+            <div class="optimization-step">
+                <div class="step-icon"></div>
+                <div class="step-text">Calibrating positivity levels</div>
+            </div>
+            <div class="optimization-step">
+                <div class="step-icon"></div>
+                <div class="step-text">Adding emojis & suggested hashtags...</div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let hasShownSuggestion = false;
+
+        // Helper function to play sound
+        function playSound(soundId) {
+            const sound = document.getElementById(soundId);
+            if (sound) {
+                sound.currentTime = 0; // Reset playback to start
+                sound.play().catch(error => {
+                    console.error(`Error playing sound ${soundId}:`, error);
+                });
+            } else {
+                console.error(`Sound element with id ${soundId} not found.`);
+            }
+        }
+
+        function showPlatformSuggestion() {
+            if (!hasShownSuggestion) {
+                document.getElementById('platform-suggestion').style.display = 'block';
+                hasShownSuggestion = true;
+            }
+        }
+
+        function animateNumber(element, start, end, duration) {
+            let current = start;
+            const increment = (end - start) / (duration / 50);
+
+            element.style.display = 'inline';
+            element.textContent = start;
+
+            const timer = setInterval(() => {
+                current += increment;
+                if (current >= end) {
+                    clearInterval(timer);
+                    current = end;
+                }
+                element.textContent = Math.round(current);
+            }, 50);
+        }
+
+        function createPost() {
+            // Play sound on button click/function start with delay
+            setTimeout(() => {
+                playSound('audio-menu-select');
+            }, 300);
+
+            const inputText = document.getElementById('inputText').value.trim();
+            if (!inputText) {
+                alert('Please enter some text');
+                return;
+            }
+
+            const resultDiv = document.getElementById('result');
+            const resultContainer = document.getElementById('result-container');
+            resultDiv.textContent = inputText;
+            
+            // 先设置最大高度
+            resultContainer.style.maxHeight = '800px';
+            
+            // 等待高度完全展开后再滚动
+            setTimeout(() => {
+                resultContainer.scrollIntoView({ behavior: "smooth", block: "center" });
+            }, 300);
+
+            // 延迟显示点赞和评论数
+            setTimeout(() => {
+                const likesCount = document.querySelector('.likes-count');
+                const commentsCount = document.querySelector('.comments-count');
+
+                // 点赞数从1增加到3
+                animateNumber(likesCount, 1, 3, 1000);
+                // 评论数保持为1
+                animateNumber(commentsCount, 1, 1, 500);
+
+                // 添加评论图标的动画效果
+                const commentWrapper = document.querySelector('.action-wrapper:nth-child(2)');
+                commentWrapper.classList.add('active');
+
+                // 将评论图标从描边改为填充
+                const commentIcon = commentWrapper.querySelector('.action-icon');
+                commentIcon.classList.remove('far');
+                commentIcon.classList.add('fas');
+            }, 2000);
+        }
+
+        // 添加Enter键发送功能
+        document.getElementById('inputText').addEventListener('keydown', function(event) {
+            if (event.key === 'Enter' && !event.shiftKey) {
+                event.preventDefault(); // 阻止默认的回车换行
+                createPost();
+            }
+        });
+
+        function startOptimization() {
+            const overlay = document.getElementById('optimization-overlay');
+            overlay.style.display = 'flex';
+
+            const header = document.querySelector('.optimization-header');
+            const steps = document.querySelectorAll('.optimization-step');
+
+            // 显示标题
+            setTimeout(() => {
+                header.classList.add('active');
+            }, 500);
+
+            // 依次显示每个步骤
+            steps.forEach((step, index) => {
+                setTimeout(() => {
+                    step.classList.add('active');
+
+                    // 在最后一个步骤完成后跳转
+                    if (index === steps.length - 1) {
+                        setTimeout(() => {
+                            location.href = 'instagram_converter.html';
+                        }, 1000);
+                    }
+                }, 1000 + (index * 800)); // 每个步骤间隔 800ms
+            });
+        }
+
+        // 修改按钮点击事件
+        document.querySelectorAll('.suggestion-button').forEach(button => {
+            button.onclick = (e) => {
+                e.preventDefault();
+                startOptimization();
+            };
+        });
+
+        const slider = document.getElementById('styleSlider');
+        const tooltip = document.getElementById('sliderTooltip');
+        const naturalLabel = document.getElementById('label-natural');
+        const platformLabel = document.getElementById('label-platform');
+        let switchTimeout = null;
+
+        // 更新标签状态和颜色
+        function updateLabels(value) {
+            const sliderElement = document.getElementById('styleSlider');
+            
+            if (parseInt(value) <= 50) {
+                // 自然风格模式
+                naturalLabel.classList.add('active');
+                naturalLabel.classList.remove('platform-active');
+                platformLabel.classList.remove('active');
+                platformLabel.classList.remove('platform-active');
+                
+                // 设置滑块颜色为蓝色
+                document.documentElement.style.setProperty('--natural-color', '#0095f6');
+                document.documentElement.style.setProperty('--natural-gradient', 'linear-gradient(to right, #82c0ff, #0095f6)');
+                sliderElement.style.background = 'var(--natural-gradient)';
+                
+            } else {
+                // 平台风格模式
+                naturalLabel.classList.remove('active');
+                naturalLabel.classList.remove('platform-active');
+                platformLabel.classList.remove('active');
+                platformLabel.classList.add('platform-active');
+                
+                // 设置滑块颜色为珊瑚粉
+                document.documentElement.style.setProperty('--natural-color', '#f78ca2');
+                document.documentElement.style.setProperty('--natural-gradient', 'linear-gradient(to right, #ffc4d0, #f78ca2)');
+                sliderElement.style.background = 'var(--natural-gradient)';
+            }
+        }
+
+        // 修改滑块事件处理逻辑
+        // 当滑动时更新颜色和标签
+        slider.addEventListener('input', function() {
+            // 更新标签状态
+            updateLabels(this.value);
+            
+            // 清除之前设置的切换超时
+            if (switchTimeout) {
+                clearTimeout(switchTimeout);
+                switchTimeout = null;
+            }
+            
+            // 检查是否过了中点，显示提示
+            if (parseInt(this.value) > 50) {
+                // 显示提示语
+                tooltip.innerHTML = 'Platform style can boost visibility, but takes time to learn...';
+                tooltip.classList.add('active');
+            } else {
+                tooltip.classList.remove('active');
+            }
+        });
+        
+        // 当释放滑块时才触发切换
+        slider.addEventListener('change', function() {
+            // Play sound on slider release with delay
+            setTimeout(() => {
+                playSound('audio-slider');
+            }, 300);
+
+            // 清除之前设置的切换超时
+            if (switchTimeout) {
+                clearTimeout(switchTimeout);
+            }
+            
+            // 检查是否过了中点
+            if (parseInt(this.value) > 50) {
+                // 显示提示语
+                tooltip.innerHTML = 'Platform style can boost visibility, but takes time to learn...';
+                tooltip.classList.add('active');
+                
+                // 设置延迟跳转
+                switchTimeout = setTimeout(() => {
+                    window.location.href = './instagram_converter.html';
+                }, 1500); // 1.5秒后跳转
+            } else {
+                tooltip.classList.remove('active');
+            }
+        });
+
+        // 初始化标签状态
+        updateLabels(slider.value);
+    </script>
+
+    <script>
+        let sketch = function(p) {
+          let likes = [];
+          let canvas;
+          let isActive = false; // Flag to control drawing
+
+          p.setup = function() {
+            canvas = p.createCanvas(p.windowWidth, p.windowHeight);
+            canvas.parent('p5-canvas-container'); // Attach canvas to the div
+            p.noStroke();
+            p.noLoop(); // Start paused
+          };
+
+          p.draw = function() {
+            if (!isActive) return; // Don't draw if not active
+
+            p.clear(); // Use p.clear() in instance mode
+            // Generate likes more frequently when active
+            // Removed timed generation: Bubbles are now generated on keydown
+            // if (isActive && p.frameCount % 15 === 0) {
+            //   likes.push({
+            //     x: p.random(p.width),
+            //     y: p.random(p.height),
+            //     size: p.random(5, 15), // Start with a small random size
+            //     alpha: 255
+            //   });
+            // }
+
+            for (let i = likes.length - 1; i >= 0; i--) {
+              let like = likes[i];
+              // Use the stored color for each bubble and apply its current alpha
+              p.fill(p.red(like.color), p.green(like.color), p.blue(like.color), like.alpha);
+              
+              // Draw hexagon instead of ellipse
+              p.push(); // Isolate transformations
+              p.translate(like.x, like.y); // Move to the bubble's position
+              // p.rotate(p.PI / 6); // Optional rotation like in storytelling.html
+              p.beginShape();
+              for (let j = 0; j < 6; j++) {
+                let angle = p.TWO_PI / 6 * j;
+                let vx = p.cos(angle) * (like.size / 2); // Use like.size (adjusting as it's radius-like)
+                let vy = p.sin(angle) * (like.size / 2);
+                p.vertex(vx, vy);
+              }
+              p.endShape(p.CLOSE);
+              p.pop(); // Restore previous drawing state
+              
+              // p.ellipse(like.x, like.y, like.size); // Removed ellipse drawing
+              like.size += 1.5; // Grow slightly slower
+              like.alpha -= 5; // Fade slightly faster
+              if (like.alpha <= 0) {
+                likes.splice(i, 1);
+              }
+            }
+
+            // If no more likes are visible, stop the loop and hide
+            if (likes.length === 0) {
+              p.deactivate();
+            }
+          };
+
+          p.windowResized = function() {
+            p.resizeCanvas(p.windowWidth, p.windowHeight);
+          };
+
+          // Function to activate the sketch
+          p.activate = function() {
+              if (!isActive) {
+                  isActive = true;
+                  document.getElementById('p5-canvas-container').style.display = 'block';
+                  p.loop();
+              }
+          }
+
+          // Function to deactivate the sketch
+          p.deactivate = function() {
+            if (isActive) {
+              isActive = false;
+              p.noLoop();
+              // Optionally hide the canvas and clear likes after a short delay for fade out
+              // No delay needed now, hide immediately when likes are gone.
+              // setTimeout(() => {
+                  // if (!isActive) { // Check again in case user typed immediately
+                      document.getElementById('p5-canvas-container').style.display = 'none';
+                  //     likes = []; // Likes are already empty or cleared naturally
+                      p.clear(); // Clear the canvas immediately
+                  // }
+              // }, 500); // Wait 500ms for existing circles to fade a bit more
+            }
+          }
+
+          // Function to generate a fixed number of bubbles
+          p.generateBubbles = function(count) {
+            for (let i = 0; i < count; i++) {
+              likes.push({
+                x: p.random(p.width),
+                y: p.random(p.height),
+                size: p.random(30, 60), // Increased size range
+                alpha: 150, // Reduced initial alpha for more transparency
+                color: p.color(p.random(150, 190), p.random(160, 200), 255) // Store random light blue-purple
+              });
+            }
+          }
+        };
+
+        let myp5 = new p5(sketch);
+        // Remove inactivity timer logic
+        // let inactivityTimer = null;
+        // const inactivityTimeoutDuration = 2000; // Stop after 2 seconds of inactivity
+        const bubblesPerKeyPress = 3; // Changed to 3 bubbles per key press
+
+        // Add event listener to the textarea
+        const inputTextElement = document.getElementById('inputText');
+        if (inputTextElement) {
+            // Change event listener to 'keydown'
+            inputTextElement.addEventListener('keydown', function(event) {
+                // Optional: Add checks here if you only want certain keys to trigger bubbles
+                // e.g., if (!event.metaKey && !event.ctrlKey && event.key.length === 1) { ... }
+
+                // Reset the timer on each input - Removed
+                // clearTimeout(inactivityTimer);
+
+                // Activate the sketch (ensures canvas is visible and loop is running)
+                myp5.activate();
+
+                // Generate a fixed number of bubbles
+                myp5.generateBubbles(bubblesPerKeyPress);
+
+                // Set a new timer to deactivate after the timeout duration - Removed
+                // inactivityTimer = setTimeout(() => {
+                //     myp5.deactivate();
+                // }, inactivityTimeoutDuration);
+            });
+        } else {
+            console.error("Element with id 'inputText' not found.");
+        }
+    </script>
+</body>
+
+</html>

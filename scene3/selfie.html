@@ -1,0 +1,1566 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.8.0/p5.js"></script>
+  <meta charset="utf-8" />
+  <link href="https://fonts.googleapis.com/css2?family=Cookie&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;700&display=swap" rel="stylesheet">
+
+  <style>
+    body {
+      margin: 0;
+      padding: 0;
+      background-image: url('./assets/background.webp');
+      background-size: cover;
+      background-position: center;
+      background-repeat: no-repeat;
+    }
+    
+    /* 添加结束提示样式 */
+    .end-note {
+      position: fixed;
+      bottom: 20px;
+      left: 50%;
+      transform: translateX(-50%);
+      color: rgba(180, 150, 200, 0.7);
+      text-align: center;
+      font-style: italic;
+      font-size: 14px;
+      font-family: 'Manrope', sans-serif;
+      background-color: rgba(30, 30, 45, 0.7);
+      padding: 8px 16px;
+      border-radius: 20px;
+      z-index: 1000;
+      pointer-events: none;
+    }
+  </style>
+</head>
+
+<body>
+  <main></main>
+  
+  <!-- 添加结束提示 -->
+  <div class="end-note">— End of Scene 3 — Continue exploring or return to main page via top-right button</div>
+
+  <audio id="audio-shutter" src="./assets/camera-shutter.mp3" preload="auto"></audio>
+
+  <script src="./landmarks.js"></script>
+  <script>
+    // 添加全局错误捕获
+    window.onerror = function(message, source, lineno, colno, error) {
+      console.error(`全局错误: ${message} @ ${source}:${lineno}`);
+      return true; // 阻止默认错误提示
+    };
+    
+    let bgImg;
+    let myHandLandmarker;
+    let myFaceLandmarker;
+    let handLandmarks;
+    let faceLandmarks;
+    let myCapture;
+    let lastVideoTime = -1;
+    // let upVideo, downVideo;  // Removed
+    // let currentVideo = null;  // Removed
+
+    const trackingConfig = {
+      doAcquireHandLandmarks: true,
+      doAcquireFaceLandmarks: true,
+      doAcquireFaceMetrics: true,
+      poseModelLiteOrFull: "lite",
+      cpuOrGpuString: "GPU",
+      maxNumHands: 1,
+      maxNumFaces: 1,
+    };
+
+    let captureButton;
+    let photoList = []
+    let captureNumSlider;
+    let captureCenterPos = {}
+    let isHappy = false;
+    let isDelete = false;
+    let draggedPhoto = null;  // 添加一个变量来跟踪当前拖动的照片
+    let wasHappy = false; // Track previous happy state for emoji trigger
+    let showFaceMesh = false; // State for face mesh visibility
+    let showAsciiArt = false; // State for ASCII art visibility
+    let faceMeshButton, asciiArtButton; // Button objects
+
+    // +++ Exhibition Area Variables +++
+    let exhibitionArea = {};
+    let nextPhotoIndex = 0;
+    const photoDisplaySize = 100; // 照片在展览区显示的尺寸
+    const photoSpacing = 20;      // 照片间距
+    const photoGridCols = 3;      // 右侧展览墙的列数 (改为3列)
+    const photoGridMaxRows = 5; // 最多显示5行，原为6行
+    // +++ End Exhibition Area Variables +++
+
+    // +++ Icon Art Variables +++
+    // 不使用字母，改用图标和符号
+    let iconChars = "○●♥☺☻▬↑↓→←∟↔▲▼" + 
+                   "!'*+,-./0123456789" +
+                   "■" ;
+
+    let cellSize = 10; // 使用较大的单元格以便更清晰地显示图标
+    let lastAsciiUpdateTime = 0; // 上次更新ASCII艺术的时间
+    const ASCII_UPDATE_INTERVAL = 333; // ASCII更新间隔为333毫秒（每秒3次）
+    let asciiCharacters = []; // 存储当前ASCII字符
+    // +++ End Icon Art Variables +++
+
+    // +++ Data Rain Background Variables +++
+    let bgSymbols = [];
+    let charPool = ["1", "2", "3", "4", "5", "6", "7", "8", "9", "0", "A", "B", "C", "D", "E", "F", "G", "H", "I", "J", "K", "L", "M", "N", "O", "P", "Q", "R", "S", "T", "U", "V", "W"];
+    const symbolSize = 20;
+    // +++ End Data Rain Background Variables +++
+
+    // +++ Emoji Variables +++
+    let happyEmojis = ['✨','🤍','🫶','💗','🎀','🫧','🧸','💕']; // 开心emoji集合
+    let cellSizeEmoji = 30; // emoji显示的单元格大小
+    let lastEmojiUpdateTime = 0; // 上次更新emoji的时间
+    const EMOJI_UPDATE_INTERVAL = 3000; // emoji更新间隔为3秒
+    let emojiPositions = []; // 存储当前emoji的位置和字符
+    // +++ End Emoji Variables +++
+
+    async function preload() {
+      // bgImg = loadImage("./assets/background3.png"); // Removed
+      
+      // 加载视频 - REMOVED
+      // upVideo = createVideo(['./assets/up.mp4']);
+      // downVideo = createVideo(['./assets/down.mp4']);
+      // upVideo.hide();
+      // downVideo.hide();
+      
+      const mediapipe_module = await import(
+        "https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision/vision_bundle.js"
+      );
+
+      HandLandmarker = mediapipe_module.HandLandmarker;
+      FaceLandmarker = mediapipe_module.FaceLandmarker;
+      FilesetResolver = mediapipe_module.FilesetResolver;
+
+      const vision = await FilesetResolver.forVisionTasks(
+        "https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.7/wasm"
+      );
+
+      if (trackingConfig.doAcquireHandLandmarks) {
+        myHandLandmarker = await HandLandmarker.createFromOptions(vision, {
+          numHands: trackingConfig.maxNumHands,
+          runningMode: "VIDEO",
+          baseOptions: {
+            delegate: trackingConfig.cpuOrGpuString,
+            modelAssetPath:
+              "https://storage.googleapis.com/mediapipe-models/hand_landmarker/hand_landmarker/float16/1/hand_landmarker.task",
+          },
+        });
+      }
+
+      if (trackingConfig.doAcquireFaceLandmarks) {
+        myFaceLandmarker = await FaceLandmarker.createFromOptions(vision, {
+          numFaces: trackingConfig.maxNumFaces,
+          runningMode: "VIDEO",
+          outputFaceBlendshapes: trackingConfig.doAcquireFaceMetrics,
+          baseOptions: {
+            delegate: trackingConfig.cpuOrGpuString,
+            modelAssetPath:
+              "https://storage.googleapis.com/mediapipe-models/face_landmarker/face_landmarker/float16/1/face_landmarker.task",
+          },
+        });
+      }
+
+      // +++ Initialize Data Rain +++
+      textFont("Courier New"); // Ensure font is set for size calculation if needed
+      textSize(symbolSize);
+      
+      // +++ ADD NEW LIMITED LOOP START +++
+      let maxSymbols = min(floor(width / symbolSize), 40); // Limit to 40 symbols max
+      let totalRainWidth = maxSymbols * symbolSize;         // Calculate total width of the rain
+      let startX = (width - totalRainWidth) / 2;           // Calculate starting X for centering
+      for (let i = 0; i < maxSymbols; i++) {                 // Loop up to maxSymbols
+        let symbolX = startX + i * symbolSize;             // Calculate centered X for this symbol
+        // bgSymbols.push(new CharSymbol(i * symbolSize, random(-100, 0))); // Remove original incorrect line
+        bgSymbols.push(new CharSymbol(symbolX, random(-100, 0))); // Use centered X
+      }
+      // +++ ADD NEW LIMITED LOOP END +++
+      
+      // +++ End Initialize Data Rain +++
+
+      // +++ Schedule Emoji Updates +++
+      setInterval(updateEmojiPositions, EMOJI_UPDATE_INTERVAL);
+      // +++ End Schedule Emoji Updates +++
+
+      // 设置视频初始状态 - REMOVED
+      // upVideo.play();
+      // downVideo.play();
+      // upVideo.pause();
+      // downVideo.pause();
+    }
+
+    async function predictWebcam() {
+      // 增加状态检查，防止在摄像头未准备好时执行
+      if (!myCapture?.elt?.currentTime) return;
+      
+      let startTimeMs = performance.now();
+      if (lastVideoTime !== myCapture.elt.currentTime) {
+        if (trackingConfig.doAcquireHandLandmarks && myHandLandmarker) {
+          handLandmarks = myHandLandmarker.detectForVideo(
+            myCapture.elt,
+            startTimeMs
+          );
+        }
+
+        if (trackingConfig.doAcquireFaceLandmarks && myFaceLandmarker) {
+          faceLandmarks = myFaceLandmarker.detectForVideo(
+            myCapture.elt,
+            startTimeMs
+          );
+        }
+        lastVideoTime = myCapture.elt.currentTime;
+      }
+    }
+
+    function setup() {
+      createCanvas(windowWidth, windowHeight, P2D);
+      myCapture = createCapture(VIDEO);
+      myCapture.size(400, 300);
+      myCapture.hide();
+      // 设置canvas透明度
+      let cnv = document.querySelector('canvas');
+      if (cnv) {
+        cnv.style.background = 'transparent';
+      }
+
+      imageMode(CENTER);
+      textAlign(CENTER, CENTER);
+      textFont('Manrope'); // Set Manrope as the default font
+
+      // Calculate viewfinder top Y for positioning UI elements above it
+      let viewfinderTopY = (height / 2 - 130) - myCapture.height / 2; // Approx height / 2 - 280
+      let viewfinderBottomY = captureCenterPos.y + myCapture.height / 2; // Approx height / 2 + 150
+
+      // --- Recalculate Y positions based on top/bottom margins --- 
+      let topMargin = height * 0.1;
+      let bottomMargin = height * 0.1; 
+      
+      let buttonY = topMargin + 25; // Position button near the top
+      let sliderY = height - bottomMargin - 30; // Position slider near bottom
+      
+      // --- REMOVE OLD/DUPLICATE Calculations ---
+      // let sliderTextTargetY = viewfinderTopY - 15; 
+      // let sliderY = sliderTextTargetY - 35; 
+      // let buttonY = sliderY - 10 - 42; 
+      // let buttonY = viewfinderBottomY + 20; 
+      // let sliderY = buttonY + 42 + 10; 
+      // let buttonY = sliderY - 10 - 42; 
+      // let sliderY_new = height - bottomMargin - 30;
+      // --- End Recalculation --- 
+
+      captureButton = {
+        x: width / 2 - 50,  // 调整x坐标以保持居中(一半的宽度)
+        y: buttonY, // Use top-based Y
+        w: 100,  // 宽度改为100px
+        h: 42
+      }
+
+      captureNumSlider = createSlider(1, 3, 1, 1);
+      captureNumSlider.position(width / 2 - 100, sliderY); // Use bottom-based Y
+      captureNumSlider.style('width', '200px');
+
+      captureCenterPos = {
+        x: width / 2,
+        // y: height / 2 - myCapture.height + 20 // Original calculation - very high
+        // y: height / 2 - 130                    // New calculation - moved down
+        y: height / 2                          // Position exactly in the center
+      }
+
+      // +++ Setup Exhibition Area (Right Wall Grid) +++
+      let gridWidth = photoGridCols * photoDisplaySize + (photoGridCols - 1) * photoSpacing;
+      let gridStartX = width - gridWidth - 50; // 右侧留50px边距
+      let gridStartY = 220; // 从原本第二行的高度开始 (原为100)
+      exhibitionArea = {
+        startX: gridStartX,
+        startY: gridStartY,
+        photoSize: photoDisplaySize,
+        spacing: photoSpacing,
+        cols: photoGridCols,
+        maxRows: photoGridMaxRows // 添加最大行数
+      };
+      // +++ End Setup Exhibition Area +++
+
+      // +++ Setup Toggle Buttons +++
+      let toggleButtonW = 120; // 调整按钮宽度，从140px减小到120px
+      let toggleButtonH = 36; // 调整按钮高度，从42px减小到36px
+      let labelBottomY = 15 + 14; // Approx bottom of the labels (labelY + textSize)
+      faceMeshButton = {
+        x: (width / 3) / 2 - toggleButtonW / 2, // Centered in left third
+        y: labelBottomY + 15, // 向下偏移适中，从20px减小到15px
+        w: toggleButtonW,
+        h: toggleButtonH
+      };
+      asciiArtButton = {
+        x: (width / 3) + (width / 3) / 2 - toggleButtonW / 2, // Centered in middle third
+        y: labelBottomY + 15, // 向下偏移适中，从20px减小到15px
+        w: toggleButtonW,
+        h: toggleButtonH
+      };
+      // +++ End Setup Toggle Buttons +++
+
+      // 设置文本属性
+      // textFont('monospace'); // REMOVED - Default is now Manrope
+      // textSize(cellSize); // 使用iconChars的大小 - Moved to where ASCII is drawn
+      textAlign(CENTER, CENTER);
+      noStroke();
+
+      // 初始化emoji位置数组
+      emojiPositions = [];
+      
+      // 初始化ASCII字符数组
+      asciiCharacters = [];
+
+      // +++ Initialize Data Rain +++
+      textFont("Courier New"); // Ensure font is set for size calculation if needed
+      textSize(symbolSize);
+      // 删除以下重复初始化代码
+      // let maxSymbols = min(floor(width / symbolSize), 60); // Limit to 60 symbols max
+      // for (let i = 0; i < maxSymbols; i++) { // Use the limited count
+      //   bgSymbols.push(new CharSymbol(i * symbolSize, random(-100, 0)));
+      // }
+      // +++ End Initialize Data Rain +++
+
+      // 设置视频初始状态 - REMOVED
+      // upVideo.play();
+      // downVideo.play();
+      // upVideo.pause();
+      // downVideo.pause();
+    }
+
+    function draw() {
+      // +++ Set base background color with very low opacity +++
+      clear(); // 清除canvas而不是用不透明背景覆盖
+      background(30, 30, 50, 80); // 使用高透明度背景，让底层图片更明显
+      // +++ Draw Data Rain Background Symbols +++
+      drawDataBackground(); 
+      // +++ End Draw Data Rain Background +++
+      
+      // +++ Draw Three Container Outlines +++
+      push();
+      stroke(150, 150, 150, 100); // Semi-transparent gray lines
+      strokeWeight(1);
+      noFill();
+      let thirdWidth = width / 3;
+      rect(0, 0, thirdWidth, height);          // Left container
+      rect(thirdWidth, 0, thirdWidth, height); // Middle container
+      rect(2 * thirdWidth, 0, thirdWidth, height); // Right container
+      pop();
+      // +++ End Draw Container Outlines +++
+
+      // +++ Draw Section Labels +++
+      push();
+      
+      // 添加光晕和文本阴影效果
+      // 使用前面已定义的thirdWidth变量
+      let labelY = 15; // Position labels near the top
+      
+      // 绘制文本阴影
+      fill(100, 80, 150);
+      textSize(18); // 增大字体
+      textStyle(BOLD);
+      textAlign(CENTER, TOP);
+      text("1. face format", thirdWidth / 2 + 1, labelY + 1);
+      text("2. Live View & ASCII Art", thirdWidth + thirdWidth / 2 + 1, labelY + 1);
+      text("3. your selfie shelf", 2 * thirdWidth + thirdWidth / 2 + 1, labelY + 1);
+      
+      // 绘制主要文本
+      fill(230, 220, 255); // 更亮的文本颜色
+      textSize(18); // 增大字体
+      textStyle(BOLD);
+      text("1. face format", thirdWidth / 2, labelY);
+      text("2. Live View & ASCII Art", thirdWidth + thirdWidth / 2, labelY);
+      text("3. your selfie shelf", 2 * thirdWidth + thirdWidth / 2, labelY);
+      
+      // 删除下划线相关代码
+      // 添加文字下划线
+      // stroke(230, 220, 255); // 与文字相同的颜色
+      // strokeWeight(1);
+      
+      // 计算每个标题的宽度和下划线位置
+      // let titleWidth1 = textWidth("face format");
+      // let titleWidth2 = textWidth("Live View & ASCII Art");
+      // let titleWidth3 = textWidth("your selfie shelf");
+      
+      // 绘制三个标题的下划线
+      // line(thirdWidth / 2 - titleWidth1/2, labelY + 22, thirdWidth / 2 + titleWidth1/2, labelY + 22);
+      // line(thirdWidth + thirdWidth / 2 - titleWidth2/2, labelY + 22, thirdWidth + thirdWidth / 2 + titleWidth2/2, labelY + 22);
+      // line(2 * thirdWidth + thirdWidth / 2 - titleWidth3/2, labelY + 22, 2 * thirdWidth + thirdWidth / 2 + titleWidth3/2, labelY + 22);
+      
+      pop();
+      // +++ End Draw Section Labels ++
+
+      // 移除此处的按钮绘制代码，放到最后绘制确保在最上层
+      // +++ Draw Toggle Buttons +++ [MOVED TO THE END OF DRAW]
+
+      myCapture.loadPixels(); // Load pixels once per frame before processing
+      
+      // +++ NEW: 先绘制文本框，将其放在视频下层 +++
+      // First draw a containing box (移动到视频绘制之前)
+      push();
+      let buttonBoxWidth = width * 0.3; // 使用屏幕宽度的30%
+      let buttonBoxHeight = 120; // 将高度调整为120px
+      let buttonBoxX = captureButton.x + 36 - buttonBoxWidth/2; // Center around button
+      let buttonBoxY = captureButton.y - 30; // Start above button
+      
+      // 左侧文本框
+      let leftBoxWidth = width * 0.25; // 左侧文本框宽度稍窄
+      let leftBoxX = width/6 - leftBoxWidth/2; // 在左侧三分之一区域居中
+      fill(40, 40, 60, 240); // 与中间框相同的背景色
+      stroke(150); // 灰色边框
+      strokeWeight(0.75);
+      rect(leftBoxX, buttonBoxY, leftBoxWidth, buttonBoxHeight, 8); // 与中间框同高度
+      
+      // 中间区域文本框
+      // Box background with increased opacity
+      fill(40, 40, 60, 240); // Darker background with more opacity
+      stroke(isHappy ? color(255, 120, 170) : color(150)); // Pink outline when happy, gray when not
+      strokeWeight(0.75); // 减少线条粗细从1.5到0.75
+      rect(buttonBoxX, buttonBoxY, buttonBoxWidth, buttonBoxHeight, 8); // Rounded corners
+      
+      // 右侧文本框
+      let rightBoxWidth = width * 0.25; // 右侧文本框宽度也稍窄
+      let rightBoxX = width*5/6 - rightBoxWidth/2; // 在右侧三分之一区域居中
+      fill(40, 40, 60, 240);
+      stroke(150);
+      strokeWeight(0.75);
+      rect(rightBoxX, buttonBoxY, rightBoxWidth, buttonBoxHeight, 8);
+      
+      // 左侧文本框的文字
+      fill(255, 220, 220); // 浅粉色文字，与中间框相同
+      textSize(14); // 减小字体确保文字适合文本框宽度
+      textAlign(CENTER, CENTER);
+      text("This real-time mesh is rendered using", leftBoxX + leftBoxWidth/2, buttonBoxY + 25);
+      text("Mediapipe + p5.js.", leftBoxX + leftBoxWidth/2, buttonBoxY + 45);
+      
+      textSize(12); // 更小的字体用于第二段较长的文字
+      fill(200, 200, 255); // 浅蓝色文字，与中间框相同
+      text("It only detects a smile to trigger the", leftBoxX + leftBoxWidth/2, buttonBoxY + 75);
+      text("interaction. No data is saved or uploaded.", leftBoxX + leftBoxWidth/2, buttonBoxY + 95);
+      
+      // 中间文本框的文字
+      // Hint Text
+      textAlign(CENTER, CENTER);
+      if (!isHappy) {
+        fill(255, 200, 200); // Light pink for the "smile to unlock" text
+        textSize(16); // Slightly larger
+        text("Smile to unlock the [Capture] button", captureButton.x + 36, buttonBoxY + 25);
+      } else {
+        fill(255, 220, 220); // Light pink even when happy
+        textSize(16);
+        text("Click the [Capture] button", captureButton.x + 36, buttonBoxY + 25);
+      }
+      
+      // Always show the formatting message
+      fill(200, 200, 255); // Light blue for the second line
+      textSize(14);
+      text("Your selfie will be formatted by the platform", captureButton.x + 36, buttonBoxY + 60);
+      
+      // 右侧文本框的文字
+      fill(255, 220, 220);
+      textSize(14);
+      text("These are the platform-approved", rightBoxX + rightBoxWidth/2, buttonBoxY + 35);
+      text("versions of you.", rightBoxX + rightBoxWidth/2, buttonBoxY + 60);
+      
+      // 可以添加第二段文字，与左侧文本框结构类似
+      fill(200, 200, 255);
+      textSize(12);
+      
+      // 修改已拍摄数量显示，分成三部分，中间数字部分用黄色加粗显示
+      let photoCountPrefix = "Photos: ";
+      let photoCountSuffix = "";
+      
+      // 计算文本宽度以确保正确对齐
+      let prefixWidth = textWidth(photoCountPrefix);
+      let countWidth = textWidth(String(photoList.length));
+      let totalWidth = prefixWidth + countWidth + textWidth(photoCountSuffix);
+      
+      // 计算起始X坐标，使整体文本居中
+      let startX = rightBoxX + rightBoxWidth/2 - totalWidth/2;
+      
+      // 绘制前缀
+      text(photoCountPrefix, startX + prefixWidth/2, buttonBoxY + 95);
+      
+      // 绘制数字部分（黄色加粗）
+      push();
+      fill(255, 235, 59); // 黄色 #FFEB3B
+      textStyle(BOLD); // 加粗
+      
+      // 绘制轻微偏移的副本来增强加粗效果
+      text(photoList.length, startX + prefixWidth + countWidth/2 - 0.5, buttonBoxY + 95 - 0.5);
+      text(photoList.length, startX + prefixWidth + countWidth/2 + 0.5, buttonBoxY + 95 - 0.5);
+      text(photoList.length, startX + prefixWidth + countWidth/2 - 0.5, buttonBoxY + 95 + 0.5);
+      text(photoList.length, startX + prefixWidth + countWidth/2 + 0.5, buttonBoxY + 95 + 0.5);
+      
+      // 中间绘制主要文本
+      text(photoList.length, startX + prefixWidth + countWidth/2, buttonBoxY + 95);
+      pop();
+      
+      // 绘制后缀
+      fill(200, 200, 255);
+      text(photoCountSuffix, startX + prefixWidth + countWidth + textWidth(photoCountSuffix)/2, buttonBoxY + 95);
+      
+      textAlign(CENTER, CENTER); // Reset text alignment
+      pop();
+      // +++ End 文本框绘制 +++
+
+      // 然后绘制视频背景
+      drawVideoBackground();
+
+      // +++ NEW: Always draw the background overlay +++
+      // Calculate dimensions needed for the overlay
+      let artTopLeftX = captureCenterPos.x - myCapture.width / 2 - 4;
+      let artTopLeftY = captureCenterPos.y - myCapture.height / 2 - 4;
+      let artWidth = myCapture.width + 8;
+      let artHeight = myCapture.height + 8;
+      
+      push();
+      noStroke();
+      // 1. Draw base dark background
+      fill(30, 30, 45); // 调整为更接近背景色(30, 30, 50)
+      rect(artTopLeftX, artTopLeftY, artWidth, artHeight, 5);
+      // 2. Draw hazy overlay
+      fill(245, 237, 246, 20); // #f5edf6 with even lower alpha
+      rect(artTopLeftX, artTopLeftY, artWidth, artHeight, 5); // Draw again on top
+      pop();
+      // +++ END Always draw background overlay +++
+
+      // 最后绘制按钮，确保按钮在最上层
+      // Set button color based on isHappy state
+      if (isHappy) {
+        fill(255, 100, 150); // Active/Happy color (e.g., pink)
+      } else {
+        fill(204); // Inactive/Gray color
+      }
+      noStroke();
+      rect(captureButton.x, captureButton.y + 60, captureButton.w, captureButton.h, 4); // 向下移动60像素
+      textSize(18)
+      fill(255)
+      text('Capture', captureButton.x + 50, captureButton.y + 60 + 21) // 调整为按钮中央 (100/2=50)
+
+      for (let i = 0; i < photoList.length; i++) {
+        let photo = photoList[i];
+        photo.display();
+        photo.update();
+      }
+
+      // 更新拖动逻辑
+      if (handPoint4 && handPoint8) {
+        const pinchDistance = dist(handPoint4.x, handPoint4.y, handPoint8.x, handPoint8.y);
+        
+        // 如果正在拖动照片
+        if (draggedPhoto) {
+          if (pinchDistance < 40) {
+            // 平滑移动照片到手指位置
+            const targetX = handPoint4.x;
+            const targetY = handPoint4.y;
+            draggedPhoto.pos.x = lerp(draggedPhoto.pos.x, targetX, 0.3);
+            draggedPhoto.pos.y = lerp(draggedPhoto.pos.y, targetY, 0.3);
+            draggedPhoto.angle = -0.2;
+          } else {
+            // 如果手指分开，释放照片
+            draggedPhoto = null;
+          }
+        } else {
+          // 检查是否可以开始拖动新照片
+          if (pinchDistance < 40) {
+            // 从后往前遍历照片列表，优先选择最上层的照片
+            for (let i = photoList.length - 1; i >= 0; i--) {
+              let photo = photoList[i];
+              if (handPoint4.x > photo.pos.x - photo.img.width / 2 && 
+                  handPoint4.x < photo.pos.x + photo.img.width / 2 && 
+                  handPoint4.y > photo.pos.y - photo.img.height / 2 && 
+                  handPoint4.y < photo.pos.y + photo.img.height / 2) {
+                draggedPhoto = photo;
+                break;
+              }
+            }
+          }
+        }
+      } else if (draggedPhoto) {
+        // 如果检测不到手部关键点，保持照片当前位置
+        draggedPhoto.angle = 0;
+      }
+
+      fill(0)
+      // text("单次拍照数量：" + captureNumSlider.value(), width / 2 + 1, height / 2 - 25 + 1)
+      let sliderTextY = captureNumSlider.y + 35; // Position text relative to slider's new position
+      text("Photos per capture: " + captureNumSlider.value(), width / 2 + 1, sliderTextY + 1);
+      fill(255);
+      // text("单次拍照数量：" + captureNumSlider.value(), width / 2, height / 2 - 25)
+      text("Photos per capture: " + captureNumSlider.value(), width / 2, sliderTextY);
+
+      predictWebcam();
+      drawHandPoints();
+      drawFacePoints();
+
+      // +++ Mixed ASCII Art and Emoji Generation +++
+      try {
+        // 只在检测到人脸时进行处理
+        if (faceLandmarks && faceLandmarks.faceLandmarks && faceLandmarks.faceLandmarks.length > 0) {
+          let landmarks = faceLandmarks.faceLandmarks[0];
+          
+          // --- REMOVED overlay dimension calculation from here ---
+          // let artTopLeftX = captureCenterPos.x - myCapture.width / 2 - 4; 
+          // let artTopLeftY = captureCenterPos.y - myCapture.height / 2 - 4;
+          // let artWidth = myCapture.width + 8; 
+          // let artHeight = myCapture.height + 8;
+
+          if (showAsciiArt) { // Only run if showAsciiArt is true
+          // --- REMOVED overlay dimension calculation from here too ---
+          // let artTopLeftX = captureCenterPos.x - myCapture.width / 2 - 4; // 略微扩展以匹配白色边框
+          // let artTopLeftY = captureCenterPos.y - myCapture.height / 2 - 4;
+          // let artWidth = myCapture.width + 8; // 略微扩展以匹配白色边框
+          // let artHeight = myCapture.height + 8;
+          
+          // 计算单元格数量
+          let cols = floor(artWidth / cellSize);
+          let rows = floor(artHeight / cellSize);
+            
+            // +++ Calculate Face Bounding Box (Normalized) +++
+            let faceMinX = 1, faceMaxX = 0, faceMinY = 1, faceMaxY = 0;
+            if (landmarks && landmarks.length > 0) {
+                for (const point of landmarks) {
+                    faceMinX = min(faceMinX, point.x);
+                    faceMaxX = max(faceMaxX, point.x);
+                    faceMinY = min(faceMinY, point.y);
+                    faceMaxY = max(faceMaxY, point.y);
+                }
+            }
+            // +++ End Face Bounding Box Calculation +++
+          
+          // 为emoji效果创建较大的单元格
+          let emojiCols = floor(artWidth / cellSizeEmoji);
+          let emojiRows = floor(artHeight / cellSizeEmoji);
+          
+          // 绘制黑色背景以完全覆盖原始摄像头画面
+          push();
+          // --- REMOVED Background drawing from here --- 
+          // fill(20, 30, 120, 100); // Change background to deep blue with low opacity - REMOVED
+          noStroke();
+            
+            // 1. Draw base dark background
+            fill(30, 30, 45); // 调整为更接近背景色(30, 30, 50)
+            rect(artTopLeftX, artTopLeftY, artWidth, artHeight, 5);
+            
+            // 2. Draw hazy overlay
+            fill(245, 237, 246, 20); // #f5edf6 with even lower alpha
+            rect(artTopLeftX, artTopLeftY, artWidth, artHeight, 5); // Draw again on top
+            
+            // 绘制背景点网格 (类似于参考图像中的圆点)
+            fill(80); // Keep dots visible enough on the new background
+          for (let y = 0; y <= rows; y++) {
+            for (let x = 0; x <= cols; x++) {
+              ellipse(artTopLeftX + x * cellSize, artTopLeftY + y * cellSize, 2, 2);
+            }
+          }
+          
+          // 生成和绘制ASCII图标艺术
+          textSize(cellSize);
+          textAlign(CENTER, CENTER);
+          
+          // 只在达到更新间隔时才更新ASCII字符
+          const currentTime = millis();
+          if (currentTime - lastAsciiUpdateTime > ASCII_UPDATE_INTERVAL || asciiCharacters.length === 0) {
+            // 更新ASCII字符
+            lastAsciiUpdateTime = currentTime;
+            
+            // 清空现有的ASCII字符数组
+            asciiCharacters = [];
+            
+            // 为每个单元格选择一个新的字符
+            for (let y = 0; y < rows; y++) {
+              asciiCharacters[y] = [];
+                // +++ Define Face Area Colors +++
+                const faceColors = [
+                  [64, 93, 230],   // #405de6
+                  [131, 58, 180],  // #833ab4
+                  [225, 48, 108],  // #e1306c
+                  [255]            // White
+                ];
+                // +++ End Define Face Area Colors +++
+              for (let x = 0; x < cols; x++) {
+                // 计算当前图标对应的摄像头像素位置
+                let camX = floor(map(x, 0, cols, myCapture.width, 0)); // 考虑镜像效果
+                let camY = floor(map(y, 0, rows, 0, myCapture.height));
+                                     
+                  // Calculate normalized coordinates for face check
+                  let normX = map(camX, 0, myCapture.width, 0, 1);
+                  let normY = map(camY, 0, myCapture.height, 0, 1);
+                                   
+                // 确保坐标在有效范围内
+                if (camX >= 0 && camX < myCapture.width && camY >= 0 && camY < myCapture.height) {
+                  // 获取摄像头在该位置的像素颜色
+                    // myCapture.loadPixels(); // REMOVED - Called once per frame now
+                  let index = (camY * myCapture.width + camX) * 4;
+                  
+                  if (index < myCapture.pixels.length - 3) {
+                    let r = myCapture.pixels[index];
+                    let g = myCapture.pixels[index + 1];
+                    let b = myCapture.pixels[index + 2];
+                    
+                    // 计算亮度，使用感知亮度公式
+                    let brightness = 0.299 * r + 0.587 * g + 0.114 * b;
+                    
+                    // 只有亮度超过阈值时才绘制图标（创建图像轮廓）
+                    if (brightness > 100) {
+                      // 根据亮度随机选择图标/符号
+                      let charIndex = floor(random(iconChars.length));
+                      let iconToDisplay = iconChars[charIndex];
+                        
+                        // +++ Determine Color based on Face Bounding Box +++
+                        let charColor = [200, 150]; // Default: grayish-white with alpha
+                        if (normX >= faceMinX && normX <= faceMaxX && normY >= faceMinY && normY <= faceMaxY) {
+                            // charColor = [255]; // Inside face: white (fully opaque) - REMOVED
+                            // Inside face: randomly choose light purple or pinkish-white (fully opaque) - REMOVED OLD LOGIC
+                            // if (random() < 0.5) { ... } else { ... } - REMOVED OLD LOGIC
+                            
+                            // Randomly select one of the four new face colors
+                            charColor = faceColors[floor(random(faceColors.length))];
+                        }
+                        // +++ End Determine Color +++
+                      
+                      // 存储ASCII字符信息
+                      asciiCharacters[y][x] = {
+                        char: iconToDisplay,
+                        x: artTopLeftX + x * cellSize + cellSize / 2,
+                        y: artTopLeftY + y * cellSize + cellSize / 2,
+                          visible: true,
+                          color: charColor // Store the determined color
+                      };
+                    } else {
+                      asciiCharacters[y][x] = { visible: false };
+                    }
+                  } else {
+                    asciiCharacters[y][x] = { visible: false };
+                  }
+                } else {
+                  asciiCharacters[y][x] = { visible: false };
+                }
+              }
+            }
+          }
+          
+          // 绘制存储的ASCII字符
+          for (let y = 0; y < asciiCharacters.length; y++) {
+            for (let x = 0; x < asciiCharacters[y].length; x++) {
+              if (asciiCharacters[y][x].visible) {
+                  fill(asciiCharacters[y][x].color); // Use stored color
+                text(asciiCharacters[y][x].char, asciiCharacters[y][x].x, asciiCharacters[y][x].y);
+              }
+            }
+          }
+          
+          // 如果用户微笑，添加彩色emoji点缀
+          if (isHappy) {
+            // 使用较大的文本大小绘制emoji
+            textSize(cellSizeEmoji);
+            
+            // 绘制存储的emoji
+            if (emojiPositions && emojiPositions.length > 0) {
+                fill(255, 255, 255, 180); // Set fill with alpha for emojis
+              for (let emoji of emojiPositions) {
+                text(emoji.emoji, emoji.x, emoji.y);
+              }
+            }
+          }
+          
+          pop();
+          textFont('Manrope'); // <<<< SWITCH BACK TO DEFAULT FONT AFTER ASCII BLOCK
+          } else {
+             // If ASCII art is hidden, NO need to draw background here anymore
+            // push();
+            // noStroke();
+            // // 1. Draw base dark background
+            // fill(30, 30, 45); // 调整为更接近背景色(30, 30, 50)
+            // rect(artTopLeftX, artTopLeftY, artWidth, artHeight, 5);
+            // // 2. Draw hazy overlay
+            // fill(245, 237, 246, 20); // #f5edf6 with even lower alpha
+            // rect(artTopLeftX, artTopLeftY, artWidth, artHeight, 5); // Draw again on top
+            // pop();
+          }
+        }
+      } catch (error) {
+        console.error('Error generating mixed art:', error);
+        // 即使生成失败，也允许应用继续运行
+      }
+
+      // 最后绘制手部关键点，保证在最上层
+      drawHandPoints();
+
+      // +++ Draw Face Mesh +++
+      if (showFaceMesh) { // Only draw if showFaceMesh is true
+        drawFaceMesh(); 
+      }
+      // +++ End Draw Face Mesh +++
+      
+      // 最后绘制Toggle Buttons确保在最上层
+      // +++ Draw Toggle Buttons +++
+      push();
+      textSize(16); // 增大文本大小从12到16
+      textAlign(CENTER, CENTER);
+      noStroke();
+      // Face Mesh Button
+      let meshBaseColor = showFaceMesh ? color(80, 50, 120) : color(180, 100, 200); // 调换颜色：Hide状态暗色，Show状态亮色
+      let meshDrawColor = meshBaseColor;
+      if (mouseX > faceMeshButton.x && mouseX < faceMeshButton.x + faceMeshButton.w && mouseY > faceMeshButton.y && mouseY < faceMeshButton.y + faceMeshButton.h) {
+        meshDrawColor = lerpColor(meshBaseColor, color(255), 0.15); // Lighten on hover
+      }
+      
+      // 添加按钮外边框
+      stroke(255, 255, 255, 120); // 半透明白色边框
+      strokeWeight(3); // 更粗的外边框
+      rect(faceMeshButton.x - 2, faceMeshButton.y - 2, faceMeshButton.w + 4, faceMeshButton.h + 4, 7); // 略大于按钮的外框
+      noStroke();
+      
+      // 绘制按钮主体
+      fill(meshDrawColor);
+      rect(faceMeshButton.x, faceMeshButton.y, faceMeshButton.w, faceMeshButton.h, 5);
+      
+      // +++ Simulate Inset Border +++
+      let shadowColor = lerpColor(meshDrawColor, color(0), 0.3); // Darker color for shadow
+      let highlightColor = lerpColor(meshDrawColor, color(255), 0.2); // Lighter color for highlight
+      strokeWeight(2); // 增加边框粗细从1到2
+      // Top and Left shadow (darker)
+      stroke(shadowColor);
+      line(faceMeshButton.x + 1, faceMeshButton.y + 1, faceMeshButton.x + faceMeshButton.w - 1, faceMeshButton.y + 1); // Top
+      line(faceMeshButton.x + 1, faceMeshButton.y + 1, faceMeshButton.x + 1, faceMeshButton.y + faceMeshButton.h - 1); // Left
+      // Bottom and Right highlight (lighter)
+      stroke(highlightColor);
+      line(faceMeshButton.x + 1, faceMeshButton.y + faceMeshButton.h - 1, faceMeshButton.x + faceMeshButton.w - 1, faceMeshButton.y + faceMeshButton.h - 1); // Bottom
+      line(faceMeshButton.x + faceMeshButton.w - 1, faceMeshButton.y + 1, faceMeshButton.x + faceMeshButton.w - 1, faceMeshButton.y + faceMeshButton.h - 1); // Right
+      noStroke(); // Reset stroke
+      
+      // 添加发光效果
+      drawingContext.shadowColor = showFaceMesh ? 'rgba(180, 100, 220, 0.7)' : 'rgba(200, 150, 255, 0.5)';
+      drawingContext.shadowBlur = 8;
+      drawingContext.shadowOffsetX = 0;
+      drawingContext.shadowOffsetY = 0;
+      // +++ End Simulate Inset Border +++
+
+      fill(showFaceMesh ? 255 : 200); // White text if shown, light gray if hidden
+      textStyle(BOLD); // 添加粗体文本
+      text(showFaceMesh ? "Hide Mesh" : "Open Mesh", faceMeshButton.x + faceMeshButton.w / 2, faceMeshButton.y + faceMeshButton.h / 2);
+      textStyle(NORMAL); // 恢复默认文本样式
+      
+      // ASCII Art Button
+      let asciiBaseColor = showAsciiArt ? color(80, 50, 120) : color(180, 100, 200); // 调换颜色：Hide状态暗色，Show状态亮色
+      let asciiDrawColor = asciiBaseColor;
+      if (mouseX > asciiArtButton.x && mouseX < asciiArtButton.x + asciiArtButton.w && mouseY > asciiArtButton.y && mouseY < asciiArtButton.y + asciiArtButton.h) {
+        asciiDrawColor = lerpColor(asciiBaseColor, color(255), 0.15); // Lighten on hover
+      }
+      
+      // 添加按钮外边框
+      stroke(255, 255, 255, 120); // 半透明白色边框
+      strokeWeight(3); // 更粗的外边框
+      rect(asciiArtButton.x - 2, asciiArtButton.y - 2, asciiArtButton.w + 4, asciiArtButton.h + 4, 7); // 略大于按钮的外框
+      noStroke();
+      
+      // 绘制按钮主体
+      fill(asciiDrawColor);
+      rect(asciiArtButton.x, asciiArtButton.y, asciiArtButton.w, asciiArtButton.h, 5);
+      
+      // +++ Simulate Inset Border +++
+      shadowColor = lerpColor(asciiDrawColor, color(0), 0.3);
+      highlightColor = lerpColor(asciiDrawColor, color(255), 0.2);
+      strokeWeight(2); // 增加边框粗细从1到2
+      // Top and Left shadow (darker)
+      stroke(shadowColor);
+      line(asciiArtButton.x + 1, asciiArtButton.y + 1, asciiArtButton.x + asciiArtButton.w - 1, asciiArtButton.y + 1); // Top
+      line(asciiArtButton.x + 1, asciiArtButton.y + 1, asciiArtButton.x + 1, asciiArtButton.y + asciiArtButton.h - 1); // Left
+      // Bottom and Right highlight (lighter)
+      stroke(highlightColor);
+      line(asciiArtButton.x + 1, asciiArtButton.y + asciiArtButton.h - 1, asciiArtButton.x + asciiArtButton.w - 1, asciiArtButton.y + asciiArtButton.h - 1); // Bottom
+      line(asciiArtButton.x + asciiArtButton.w - 1, asciiArtButton.y + 1, asciiArtButton.x + asciiArtButton.w - 1, asciiArtButton.y + asciiArtButton.h - 1); // Right
+      noStroke(); // Reset stroke
+      
+      // 添加发光效果
+      drawingContext.shadowColor = showAsciiArt ? 'rgba(180, 100, 220, 0.7)' : 'rgba(200, 150, 255, 0.5)';
+      drawingContext.shadowBlur = 8;
+      drawingContext.shadowOffsetX = 0;
+      drawingContext.shadowOffsetY = 0;
+      // +++ End Simulate Inset Border +++
+      
+      fill(showAsciiArt ? 255 : 200); // White text if shown, light gray if hidden
+      textStyle(BOLD); // 添加粗体文本
+      text(showAsciiArt ? "Hide ASCII" : "Open ASCII", asciiArtButton.x + asciiArtButton.w / 2, asciiArtButton.y + asciiArtButton.h / 2);
+      textStyle(NORMAL); // 恢复默认文本样式
+      pop();
+      // +++ End Draw Toggle Buttons +++
+    }
+
+    function mousePressed() {
+      let mx = mouseX;
+      let my = mouseY;
+      if (mx > captureButton.x && mx < captureButton.x + captureButton.w && my > captureButton.y + 60 && my < captureButton.y + 60 + captureButton.h) {
+        if (isHappy && showAsciiArt) {
+          // Play shutter sound with delay when capture is successful
+          setTimeout(() => {
+            playSound('audio-shutter');
+          }, 300);
+
+          for (let i = 0; i < captureNumSlider.value(); i++) {
+            handleCapture()
+          }
+          aaa()
+        } else if (!showAsciiArt) {
+          // 创建一个toast元素提示用户启用ASCII功能
+          const toast = document.createElement('div');
+          toast.textContent = 'Click the "Open ASCII" button at the top to take photos!';
+          toast.style.position = 'fixed';
+          toast.style.top = '50%';  // 改为50%
+          toast.style.left = '50%';
+          toast.style.transform = 'translate(-50%, -50%)';  // 同时垂直和水平居中
+          toast.style.backgroundColor = '#333';
+          toast.style.color = '#fff';
+          toast.style.padding = '10px 20px';
+          toast.style.borderRadius = '5px';
+          toast.style.zIndex = '1000';
+          document.body.appendChild(toast);
+
+          // 显示一段时间后自动隐藏
+          setTimeout(() => {
+            toast.style.display = 'none';
+          }, 2000);
+        } else if (!isHappy) {
+          // 创建一个toast元素
+          const toast = document.createElement('div');
+          toast.textContent = 'Please keep smiling!';
+          toast.style.position = 'fixed';
+          toast.style.top = '50%';  // 改为50%
+          toast.style.left = '50%';
+          toast.style.transform = 'translate(-50%, -50%)';  // 同时垂直和水平居中
+          toast.style.backgroundColor = '#333';
+          toast.style.color = '#fff';
+          toast.style.padding = '10px 20px';
+          toast.style.borderRadius = '5px';
+          toast.style.zIndex = '1000';
+          document.body.appendChild(toast);
+
+          // 显示一段时间后自动隐藏
+          setTimeout(() => {
+            toast.style.display = 'none';
+          }, 2000);
+        }
+      }
+      
+      // +++ Check Toggle Buttons +++
+      // Face Mesh Toggle
+      if (mx > faceMeshButton.x && mx < faceMeshButton.x + faceMeshButton.w && my > faceMeshButton.y && my < faceMeshButton.y + faceMeshButton.h) {
+        showFaceMesh = !showFaceMesh;
+      }
+      // ASCII Art Toggle
+      if (mx > asciiArtButton.x && mx < asciiArtButton.x + asciiArtButton.w && my > asciiArtButton.y && my < asciiArtButton.y + asciiArtButton.h) {
+        showAsciiArt = !showAsciiArt;
+      }
+      // +++ End Check Toggle Buttons +++
+    }
+
+    function drawVideoBackground() {
+      push();
+      translate(captureCenterPos.x, captureCenterPos.y);
+      noStroke();
+      fill(255);
+      rect(-myCapture.width / 2 - 4, -myCapture.height / 2 - 4, myCapture.width + 8, myCapture.height + 8, 5);
+      
+      // 绘制摄像头画面，艺术效果将覆盖人脸部分
+      scale(-1, 1);
+      image(myCapture, 0, 0);
+      
+      pop();
+    }
+
+    let handPoint4, handPoint8;
+    function drawHandPoints() {
+      if (trackingConfig.doAcquireHandLandmarks) {
+        if (handLandmarks && handLandmarks.landmarks) {
+          const nHands = handLandmarks.landmarks.length;
+          if (nHands > 0) {
+            let joints = handLandmarks.landmarks[0];
+
+            fill(116, 233, 79)
+            let px4 = joints[4].x;
+            let py4 = joints[4].y;
+            px4 = map(px4, 0, 1, width, 0);
+            py4 = map(py4, 0, 1, 0, height);
+            circle(px4, py4, 12);
+            handPoint4 = {
+              x: px4,
+              y: py4
+            }
+
+            let px8 = joints[8].x;
+            let py8 = joints[8].y;
+            px8 = map(px8, 0, 1, width, 0);
+            py8 = map(py8, 0, 1, 0, height);
+            circle(px8, py8, 12);
+            handPoint8 = {
+              x: px8,
+              y: py8
+            }
+          }
+        }
+      }
+    }
+
+    function drawFacePoints() {
+      if (trackingConfig.doAcquireFaceLandmarks) {
+        if (faceLandmarks && faceLandmarks.faceLandmarks) {
+
+          // --- Keep logic to update isHappy ---
+          isHappy = false
+          if (faceLandmarks?.faceBlendshapes?.[0]?.categories) {
+            let data = faceLandmarks.faceBlendshapes[0].categories.map((item) => {
+              return {
+                score: Number(item.score.toFixed(2)),
+                categoryName: item.categoryName,
+              };
+            });
+            const scores = Object.fromEntries(data.map(item => [item.categoryName, item.score]));
+            // You might want to refine this condition further based on testing
+            if (scores.mouthSmileLeft > 0.3 || scores.mouthSmileRight > 0.3) { // Keep your original || or change to && if preferred
+              isHappy = true;
+            }
+          }
+          // --- End isHappy update logic ---
+        }
+      }
+    }
+
+    function handleCapture() {
+      // 创建一个新画布来渲染艺术效果
+      let artCanvas = createGraphics(300, 300);
+      
+      myCapture.loadPixels(); // Load pixels once at the start of capture
+      
+      // 设置文本属性
+      artCanvas.textFont('Manrope'); // Set Manrope as default for capture canvas
+      artCanvas.textAlign(CENTER, CENTER);
+      artCanvas.noStroke();
+      
+      // 绘制黑色背景
+      // artCanvas.fill(20, 30, 120, 100); // Change background to deep blue with low opacity - REMOVED
+      
+      // 1. Draw base dark background for capture
+      artCanvas.fill(30, 30, 45); // 调整为更接近背景色(30, 30, 50)
+      artCanvas.rect(0, 0, 300, 300);
+      
+      // 2. Draw hazy overlay for capture
+      artCanvas.fill(245, 237, 246, 20); // #f5edf6 with even lower alpha
+      artCanvas.rect(0, 0, 300, 300); // Draw again on top
+      
+      // 计算单元格数量
+      let cols = floor(300 / cellSize);
+      let rows = floor(300 / cellSize);
+      
+      // 创建背景点网格
+      artCanvas.fill(255); // This fill is for the background dots, keep it lighter than main bg
+      artCanvas.fill(80); // Use the same dot color as in draw()
+      for (let y = 0; y <= rows; y++) {
+        for (let x = 0; x <= cols; x++) {
+          artCanvas.ellipse(x * cellSize, y * cellSize, 2, 2);
+        }
+      }
+      
+      // 检查asciiCharacters是否存在及其长度
+      if (asciiCharacters && asciiCharacters.length > 0) {
+        // Only draw ASCII characters to the photo if the effect is currently shown
+        if (showAsciiArt && asciiCharacters && asciiCharacters.length > 0) {
+        // 计算缩放比例
+        const scaleX = 300 / (myCapture.width + 8);
+        const scaleY = 300 / (myCapture.height + 8);
+        
+        // 直接使用当前屏幕上的ASCII字符
+        artCanvas.textFont('monospace'); // <<<< SET MONOSPACE FOR ASCII
+        artCanvas.textSize(cellSize);
+        artCanvas.fill(255);
+        
+        for (let y = 0; y < asciiCharacters.length; y++) {
+          if (asciiCharacters[y]) {  // 确保行存在
+            for (let x = 0; x < asciiCharacters[y].length; x++) {
+              if (asciiCharacters[y][x] && asciiCharacters[y][x].visible) {
+                try {
+                  // 计算在新画布上的位置
+                  let newX = x * cellSize + cellSize/2;
+                  let newY = y * cellSize + cellSize/2;
+                  
+                  // 绘制字符
+                    artCanvas.fill(asciiCharacters[y][x].color); // Use stored color
+                  artCanvas.text(asciiCharacters[y][x].char, newX, newY);
+                } catch (e) {
+                  console.error("Error drawing ASCII character:", e);
+                }
+                }
+              }
+            }
+          }
+        } else if (showAsciiArt) {
+          // 如果没有现有ASCII字符，则生成新的
+          artCanvas.textFont('monospace'); // <<<< SET MONOSPACE FOR ASCII
+          artCanvas.textSize(cellSize);
+          for (let y = 0; y < rows; y++) {
+            for (let x = 0; x < cols; x++) {
+              // 获取摄像头在该位置的像素颜色
+              try {
+                // myCapture.loadPixels(); // REMOVED - Called once at start of handleCapture now
+                let camX = floor(map(x, 0, cols, myCapture.width, 0));
+                let camY = floor(map(y, 0, rows, 0, myCapture.height));
+                
+                if (camX >= 0 && camX < myCapture.width && camY >= 0 && camY < myCapture.height) {
+                  let index = (camY * myCapture.width + camX) * 4;
+                  
+                  if (index < myCapture.pixels.length - 3) {
+                    let r = myCapture.pixels[index];
+                    let g = myCapture.pixels[index + 1];
+                    let b = myCapture.pixels[index + 2];
+                    
+                    // 计算亮度
+                    let brightness = 0.299 * r + 0.587 * g + 0.114 * b;
+                    
+                    // 只有亮度超过阈值时才绘制图标
+                    if (brightness > 100) {
+                      let charIndex = floor(random(iconChars.length));
+                      let iconToDisplay = iconChars[charIndex];
+                      
+                      // 绘制ASCII字符
+                      artCanvas.fill(200, 150); // Default color (grayish-white with alpha) for fallback generation
+                      
+                      // +++ Check if inside face (needs recalculation here) +++
+                      // This fallback generation path doesn't have the face box easily available.
+                      // We'll stick to the default grayish-white for simplicity in this rare case.
+                      // To implement perfectly, we'd need to pass face box data or recalculate.
+                      // +++ End Check +++
+                      
+                      artCanvas.text(iconToDisplay, x * cellSize + cellSize/2, y * cellSize + cellSize/2);
+                    }
+                  }
+                }
+              } catch (e) {
+                console.error("Error processing pixel:", e);
+              }
+            }
+          }
+        }
+      } else {
+        // 如果没有现有ASCII字符，则生成新的
+        artCanvas.textFont('monospace'); // <<<< SET MONOSPACE FOR ASCII
+        artCanvas.textSize(cellSize);
+        for (let y = 0; y < rows; y++) {
+          for (let x = 0; x < cols; x++) {
+            // 获取摄像头在该位置的像素颜色
+            try {
+              // myCapture.loadPixels(); // REMOVED - Called once at start of handleCapture now
+              let camX = floor(map(x, 0, cols, myCapture.width, 0));
+              let camY = floor(map(y, 0, rows, 0, myCapture.height));
+              
+              if (camX >= 0 && camX < myCapture.width && camY >= 0 && camY < myCapture.height) {
+                let index = (camY * myCapture.width + camX) * 4;
+                
+                if (index < myCapture.pixels.length - 3) {
+                  let r = myCapture.pixels[index];
+                  let g = myCapture.pixels[index + 1];
+                  let b = myCapture.pixels[index + 2];
+                  
+                  // 计算亮度
+                  let brightness = 0.299 * r + 0.587 * g + 0.114 * b;
+                  
+                  // 只有亮度超过阈值时才绘制图标
+                  if (brightness > 100) {
+                    let charIndex = floor(random(iconChars.length));
+                    let iconToDisplay = iconChars[charIndex];
+                    
+                    // 绘制ASCII字符
+                    artCanvas.fill(200, 150); // Default color (grayish-white with alpha) for fallback generation
+                    
+                    // +++ Check if inside face (needs recalculation here) +++
+                    // This fallback generation path doesn't have the face box easily available.
+                    // We'll stick to the default grayish-white for simplicity in this rare case.
+                    // To implement perfectly, we'd need to pass face box data or recalculate.
+                    // +++ End Check +++
+                    
+                    artCanvas.text(iconToDisplay, x * cellSize + cellSize/2, y * cellSize + cellSize/2);
+                  }
+                }
+              }
+            } catch (e) {
+              console.error("Error processing pixel:", e);
+            }
+          }
+        }
+      }
+      
+      // 如果用户微笑，添加emoji
+      if (isHappy) {
+        artCanvas.textFont('Manrope'); // <<<< SWITCH BACK FOR EMOJI (or default)
+        artCanvas.textSize(cellSizeEmoji);
+        
+        if (emojiPositions && emojiPositions.length > 0) {
+          // 使用现有emoji位置
+          try {
+            // 在底部绘制一行emoji
+            let numEmojis = emojiPositions.length;
+            let totalWidth = numEmojis * cellSizeEmoji;
+            let startX = (300 - totalWidth) / 2;
+            let emojiY = 300 - cellSizeEmoji; // 底部位置
+            
+            artCanvas.fill(255, 255, 255, 180); // Set fill before loop for emojis
+            for (let i = 0; i < numEmojis; i++) {
+              let emojiX = startX + i * cellSizeEmoji + cellSizeEmoji/2;
+              artCanvas.text(emojiPositions[i].emoji, emojiX, emojiY);
+            }
+          } catch (e) {
+            console.error("Error drawing emojis:", e);
+          }
+        } else {
+          // 如果没有现有emoji，则生成新的
+          let numEmojis = floor(random(3, 7));
+          let totalWidth = numEmojis * cellSizeEmoji;
+          let startX = (300 - totalWidth) / 2;
+          let emojiY = 300 - cellSizeEmoji; // 底部位置
+          
+          artCanvas.fill(255, 255, 255, 180); // Set fill before loop for emojis
+          for (let i = 0; i < numEmojis; i++) {
+            let randomEmoji = happyEmojis[floor(random(happyEmojis.length))];
+            let emojiX = startX + i * cellSizeEmoji + cellSizeEmoji/2;
+            artCanvas.text(randomEmoji, emojiX, emojiY);
+          }
+        }
+      }
+      
+      // +++ Calculate Target Position in Right Grid Exhibition Area (3x6 Grid with Wrap-around) +++
+      let maxSlots = exhibitionArea.cols * exhibitionArea.maxRows;
+      let targetSlotIndex = nextPhotoIndex % maxSlots; // Index wraps around 0-17
+      let col = targetSlotIndex % exhibitionArea.cols;
+      let row = floor(targetSlotIndex / exhibitionArea.cols);
+      let targetX = exhibitionArea.startX + col * (exhibitionArea.photoSize + exhibitionArea.spacing) + exhibitionArea.photoSize / 2;
+      let targetY = exhibitionArea.startY + row * (exhibitionArea.photoSize + exhibitionArea.spacing) + exhibitionArea.photoSize / 2;
+      let targetPos = createVector(targetX, targetY);
+      nextPhotoIndex++; // Increment total photo count
+      // +++ End Calculate Target Position +++
+      
+      // 创建捕获的图像
+      let photoNumber = nextPhotoIndex; // Use total count for label, starting from 1
+      let wasSmiling = isHappy; // Capture the smiling state
+      let photo = new MyPhoto(artCanvas, targetPos, photoNumber, wasSmiling); // Pass number and state
+      
+      // +++ Overwrite logic: Keep only the latest 18 photos +++
+      if (photoList.length >= maxSlots) {
+        photoList.shift(); // Remove the oldest photo from the beginning of the array
+      }
+      photoList.push(photo);
+      // +++ End Overwrite logic +++
+    }
+
+    class MyPhoto {
+      constructor(img, targetPos, number, smiling) { // Accept number and smiling state
+        if (img instanceof p5.Graphics) {
+          // 如果是图形对象，转换为图像
+          this.img = createImage(img.width, img.height);
+          this.img.copy(img, 0, 0, img.width, img.height, 0, 0, img.width, img.height);
+          img.remove(); // 释放图形对象
+        } else {
+          this.img = img;
+        }
+        this.img.resize(photoDisplaySize, photoDisplaySize); // Use defined display size
+        this.pos = createVector(captureCenterPos.x, captureCenterPos.y); // Start at capture center
+        this.angle = PI;
+        this.targetPos = targetPos; // Use the passed target position
+        this.initDist = dist(this.pos.x, this.pos.y, this.targetPos.x, this.targetPos.y); // Calculate initial distance
+        this.done = false;
+        this.number = number; // Store the photo number
+        this.smiling = smiling; // Store the smiling state
+      }
+
+      display() {
+        push();
+        translate(this.pos.x, this.pos.y);
+        rotate(this.angle);
+        fill(255)
+        drawingContext.shadowOffsetX = 0;
+        drawingContext.shadowOffsetY = 0;
+        drawingContext.shadowBlur = 15;
+        drawingContext.shadowColor = 'rgb(50, 50, 50)';
+        rect(-54, -54, 108, 108, 4)
+        drawingContext.shadowBlur = 0;
+        image(this.img, 0, 0);
+        pop();
+
+        // +++ Add Hover Information Label +++
+        if (this.done) { // Only show label when photo is in place
+            let hoverDist = dist(mouseX, mouseY, this.pos.x, this.pos.y);
+            if (hoverDist < this.img.width / 2) { // Check if mouse is over the photo
+                push();
+                translate(this.pos.x, this.pos.y); // Position in the middle of the photo
+                fill(0, 0, 0, 180); // Semi-transparent black background
+                noStroke();
+                let labelText = `📷 #${this.number}\npositive emotion: detected`;
+                let textW = textWidth(labelText.split('\n')[0]) + 10; // Get width of first line
+                let textH = 35; // Approximate height for two lines
+                rect(-textW/2, -textH/2, textW, textH, 5); // Draw background rect
+
+                textFont('Manrope'); // <<<< Ensure Manrope for label
+                fill(255); // White text
+                textSize(12);
+                textAlign(CENTER, CENTER);
+                text(labelText, 0, 0);
+        pop();
+            }
+        }
+        // +++ End Hover Information Label +++
+      }
+
+      update() {
+        if (!this.done) {
+          // 初始速度更快，随着接近目标减慢
+          let initialSpeed = 45; // 初始速度提高到45
+          let minSpeed = 18; // 最小速度保持为18
+          
+          let curDist = this.pos.dist(this.targetPos);
+          let progress = curDist / this.initDist; // 接近目标的进度比例
+          
+          // 根据距离计算当前速度：距离越远速度越快
+          let currentSpeed = minSpeed + (initialSpeed - minSpeed) * progress;
+          
+          if (curDist < minSpeed) {
+            this.pos = this.targetPos.copy();
+            this.angle = 0;
+            this.done = true;
+          } else {
+            let dir = p5.Vector.sub(this.targetPos, this.pos);
+            dir.normalize();
+            this.pos.add(dir.mult(currentSpeed)); // 使用计算出的当前速度
+            this.angle = map(curDist, 0, this.initDist, 0, PI);
+          }
+        } else {
+          this.angle = 0;
+        }
+      }
+    }
+
+    let totalKeyPresses = 0;      // 总敲击次数
+    let currentKeyPresses = 0;    // 当前会话敲击次数
+    let messageCount = 0;         // 发送消息数
+    let speedHistory = [];        // 速度历史记录
+    let typingStartTime = null;   // 当前输入会话开始时间
+    let lastTypingTime = null;    // 最后一次输入时间
+    let typingTimeout = null;     // 重置计时器
+    const MAX_SPEED = 10;         // 最大速度（次/秒）
+    const TYPING_INTERVAL = 2000; // 重置间隔（毫秒）
+
+    function aaa() {
+      const now = Date.now();
+
+      if (!typingStartTime || (now - lastTypingTime) > TYPING_INTERVAL) {
+        typingStartTime = now;
+        currentKeyPresses = 0;
+      }
+
+      lastTypingTime = now;
+      currentKeyPresses++;
+      totalKeyPresses++;
+
+      if (typingTimeout) {
+        clearTimeout(typingTimeout);
+      }
+
+      const timeElapsed = (now - typingStartTime) / 1000;
+      if (timeElapsed > 0) {
+        const pressesPerSecond = (currentKeyPresses / timeElapsed).toFixed(1);
+        document.getElementById('replySpeed').textContent = pressesPerSecond;
+        updateLaborStats(Number(pressesPerSecond));
+      }
+
+      typingTimeout = setTimeout(() => {
+        typingStartTime = null;
+        currentKeyPresses = 0;
+        document.getElementById('replySpeed').textContent = '0.0';
+        updateLaborStats(0);
+      }, TYPING_INTERVAL);
+    }
+
+    // +++ New function to draw the face mesh +++
+    function drawFaceMesh() {
+      if (trackingConfig.doAcquireFaceLandmarks && faceLandmarks && faceLandmarks.faceLandmarks && faceLandmarks.faceLandmarks.length > 0) {
+        const landmarks = faceLandmarks.faceLandmarks[0];
+        
+        push();
+        stroke(255, 255, 255, 60); // Increased transparency
+        strokeWeight(1);
+        noFill();
+
+        // Draw Tesselation lines (the main mesh)
+        if (FaceLandmarker && FaceLandmarker.FACE_LANDMARKS_TESSELATION) {
+          // for (const connection of FaceLandmarker.FACE_LANDMARKS_TESSELATION) { // REMOVE old loop
+          // Draw only every Nth line to reduce density
+          const connections = FaceLandmarker.FACE_LANDMARKS_TESSELATION;
+          for (let i = 0; i < connections.length; i++) {
+            if (i % 3 === 0) { // Only draw every 3rd line
+              const connection = connections[i]; // Get the current connection
+              const start = landmarks[connection.start];
+              const end = landmarks[connection.end];
+              if (start && end) { // Check if landmarks exist
+                // --- USE CORRECT PROPORTIONAL MAPPING --- 
+                // --- Shifted Left & Proportional Mapping --- 
+                line(
+                  map(start.x, 0, 1, width / 2, -width / 6), map(start.y, 0, 1, height / 6, 5 * height / 6), // Shift X left
+                  map(end.x, 0, 1, width / 2, -width / 6),   map(end.y, 0, 1, height / 6, 5 * height / 6)    // Shift X left
+                );
+              }
+            }
+          }
+        }
+        
+        // Optionally draw other features like lips, eyes etc. with different colors/weights if needed
+        // Example: Draw Lips thicker
+        /*
+        stroke(255, 150, 150, 150); // Light red
+        strokeWeight(2);
+        if (FaceLandmarker && FaceLandmarker.FACE_LANDMARKS_LIPS) {
+           for (const connection of FaceLandmarker.FACE_LANDMARKS_LIPS) {
+            const start = landmarks[connection.start];
+            const end = landmarks[connection.end];
+             if (start && end) { 
+               line(
+                 map(start.x, 0, 1, width, 0), map(start.y, 0, 1, 0, height),
+                 map(end.x, 0, 1, width, 0), map(end.y, 0, 1, 0, height)
+               );
+             }
+           }
+        }
+        */
+
+        pop();
+      }
+    }
+    // +++ End new function +++
+
+    // +++ New function to draw the data rain background +++
+    function drawDataBackground() {
+      // background(30, 30, 50, 100); // Semi-transparent dark background for the rain effect - REMOVED
+      textFont('Manrope'); // <<<< Ensure Manrope for data rain
+      fill(255, 200, 230, 100); // 降低符号不透明度到100
+      textSize(symbolSize);
+      for (let s of bgSymbols) {
+        s.show();
+        s.update();
+      }
+    }
+    // +++ End new function +++
+
+    // +++ Add CharSymbol Class Definition +++
+    class CharSymbol {
+      constructor(x, y) { // Simplify constructor
+        this.x = x;
+        this.y = y;
+        this.speed = random(1, 4);
+        this.isEmoji = false;
+        this.reset(); // Always reset from charPool initially
+      }
+
+      reset() {
+        let index = Math.floor(Math.random() * charPool.length);
+        this.value = charPool[index];
+      }
+
+      update() {
+        this.y += this.speed;
+        if (this.y > height) {
+          this.y = random(-100, 0);
+          this.reset();
+        }
+      }
+
+      show() {
+        // Calculate alpha based on horizontal distance from center
+        let baseColor = [255, 200, 230]; // Base soft pink color
+        let maxAlpha = 30; // 降低最大透明度从50到30
+        let minAlpha = 8;  // 降低最小透明度从10到8
+        let distFromCenter = abs(this.x - width / 2);
+        let calculatedAlpha = map(distFromCenter, 0, width / 2, maxAlpha, minAlpha);
+        calculatedAlpha = constrain(calculatedAlpha, minAlpha, maxAlpha); // Ensure alpha stays within bounds
+
+        // 添加模糊散点效果 - 绘制多个半透明的点
+        push();
+        textSize(symbolSize * 0.9); // 稍微小一点的文本尺寸
+        
+        // 绘制多个偏移版本的字符来创建模糊效果
+        for (let i = 0; i < 3; i++) {
+          let offsetX = random(-2, 2);
+          let offsetY = random(-2, 2);
+          let blurAlpha = calculatedAlpha * 0.3; // 更透明的副本
+          
+          fill(baseColor[0], baseColor[1], baseColor[2], blurAlpha);
+          text(this.value, this.x + offsetX, this.y + offsetY);
+        }
+        
+        // 绘制主字符
+        textSize(symbolSize);
+        fill(baseColor[0], baseColor[1], baseColor[2], calculatedAlpha * 0.8); // 主字符也要稍微透明点
+        text(this.value, this.x, this.y);
+        pop();
+      }
+    }
+    // +++ End CharSymbol Class Definition +++
+
+    // +++ New function to update emoji positions periodically +++
+    function updateEmojiPositions() {
+      if (isHappy) {
+        // Calculate necessary dimensions if needed (artTopLeftX, artWidth etc might need to be accessible or recalculated)
+        // We need the drawing context dimensions here. Let's approximate based on capture size.
+        // +++ Re-calculate dimensions here if needed, or ensure they are globally accessible +++
+        let artTopLeftX = captureCenterPos.x - myCapture.width / 2 - 4;
+        let artWidth = myCapture.width + 8;
+        let artTopLeftY = captureCenterPos.y - myCapture.height / 2 - 4;
+        let artHeight = myCapture.height + 8;
+
+        // 在底部生成一行emoji，不再随机位置
+        let numEmojis = floor(random(1, 5)); // 显示1-4个emoji
+        
+        // 清除之前的emoji数组并生成新的
+        emojiPositions = [];
+        
+        // 计算放置位置：底部中央一行
+        let totalWidth = numEmojis * cellSizeEmoji;
+        let startX = artTopLeftX + (artWidth - totalWidth) / 2;
+        let emojiY = artTopLeftY + artHeight - cellSizeEmoji / 2; // Adjust Y slightly for better centering
+        
+        for (let i = 0; i < numEmojis; i++) {
+          // 随机选择emoji，但位置是固定的一行
+          let randomEmoji = happyEmojis[floor(random(happyEmojis.length))];
+          let emojiX = startX + i * cellSizeEmoji + cellSizeEmoji / 2;
+          
+          // 存储emoji信息
+          emojiPositions.push({
+            emoji: randomEmoji,
+            x: emojiX, 
+            y: emojiY
+          });
+        }
+      } else {
+        // If not happy, clear existing emojis
+        emojiPositions = [];
+      }
+    }
+    // +++ End new function +++
+
+    // Helper function to play sound
+    function playSound(soundId) {
+        const sound = document.getElementById(soundId);
+        if (sound) {
+            sound.currentTime = 0; // Reset playback to start
+            sound.play().catch(error => {
+                console.error(`Error playing sound ${soundId}:`, error);
+            });
+        } else {
+            console.error(`Sound element with id ${soundId} not found.`);
+        }
+    }
+
+  </script>
+</body>
+
+</html>

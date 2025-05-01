@@ -1,0 +1,362 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>scene3_storytelling</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.4.0/p5.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Cookie&display=swap" rel="stylesheet">
+    <!-- 添加 Manrope 字体 -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@300;400;500;600&display=swap" rel="stylesheet">
+    
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Manrope', sans-serif;
+            background-color: #ffffff;
+            overflow-x: hidden;
+        }
+
+        .scroll-container {
+            position: relative;
+            width: 100%;
+            height: 100vh;
+        }
+
+        .scroll-section {
+            position: relative;
+            width: 100%;
+            height: 100vh;
+            overflow: hidden;
+        }
+
+        .step {
+            position: relative;
+            width: 100%;
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: flex-end;
+            padding: 2rem;
+            padding-right: 5%;
+        }
+
+        .content-box {
+            padding: 2rem;
+            border-radius: 8px;
+            text-align: center;
+            max-width: 50%;
+            margin-left: auto;
+            margin-right: 0%;
+            margin-top: 20vh;
+            z-index: 3;
+        }
+
+        .text-content {
+            color: #262626;
+            font-size: 17px;
+            line-height: 1.8;
+            text-align: center;
+            width: 90%;
+            margin: 0 auto;
+            padding: 1.5rem;
+            background-color: rgba(255, 255, 255, 0.9);
+            border: 3px solid #904eaf;
+            border-radius: 15px;
+            box-shadow: none;
+            font-family: 'Manrope', sans-serif;
+            position: relative;
+        }
+
+        .text-content::before {
+            content: '"';
+            position: absolute;
+            top: -40px;
+            left: -25px;
+            font-family: serif;
+            font-size: 6rem;
+            color: rgba(144, 78, 175, 0.3);
+            z-index: 5;
+            line-height: 1;
+        }
+
+        .text-line {
+            margin-bottom: 16px;
+            opacity: 0;
+            transform: translateY(10px);
+            animation: fadeIn 1.5s ease forwards;
+            font-family: 'Manrope', sans-serif;
+        }
+
+        .text-line:nth-child(1) {
+            animation-delay: 0s;
+        }
+
+        .text-line:nth-child(2) {
+            animation-delay: 1s;
+        }
+
+        .text-line:nth-child(3) {
+            animation-delay: 2s;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        #p5-canvas {
+            position: fixed;
+            top: 0;
+            left: 0;
+            z-index: 1;
+            pointer-events: none;
+        }
+
+        .page-image {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100vh;
+            object-fit: contain;
+            opacity: 1;
+            z-index: 2;
+            display: flex;
+            justify-content: flex-start;
+            align-items: center;
+            padding-left: 5%;
+        }
+
+        .page-image img {
+            width: 38%;
+            height: auto;
+            object-fit: contain;
+            margin-top: 5vh;
+            margin-left: 10%;
+        }
+
+        /* 按钮容器样式 */
+        .button-container {
+            position: relative;
+            align-self: flex-start;
+        }
+        
+        .content-box button {
+            display: block; 
+            margin-top: 1.5rem; 
+            padding: 15px 30px;
+            font-size: 18px;
+            font-weight: bold;
+            color: white;
+            background: linear-gradient(45deg, #ff00ff, #00ffff);
+            border: none;
+            border-radius: 25px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 0 20px rgba(255, 0, 255, 0.5);
+            width: auto;
+            opacity: 0;
+            animation: fadeIn 1.5s ease 2s forwards;
+            font-family: 'Manrope', sans-serif;
+            margin-left: auto;
+            margin-right: auto;
+            pointer-events: none;
+        }
+
+        .content-box button:hover {
+            box-shadow: 0 0 30px rgba(255, 0, 255, 0.8);
+            transform: scale(1.05);
+        }
+
+        @keyframes enableButton {
+            to {
+                pointer-events: auto;
+            }
+        }
+
+        .content-box button {
+            animation: fadeIn 1.5s ease 2s forwards, enableButton 0.1s 3s forwards;
+        }
+
+        /* 按钮提示文字样式 */
+        .button-hint {
+            position: relative;
+            font-size: 16px;
+            color: rgba(122, 140, 161, 0.7);
+            width: 100%;
+            text-align: center;
+            padding-top: 8px;
+            font-family: 'Manrope', sans-serif;
+            font-style: italic;
+            margin-top: 10px;
+        }
+
+        body.fade-out {
+            opacity: 0 !important;
+            transition: opacity 0.5s ease-out !important;
+        }
+
+        .story-title-header {
+            position: fixed;
+            top: 20px;
+            left: 20px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            color: #fff;
+            z-index: 10;
+        }
+
+        .title-text {
+            font-family: 'Cookie', cursive;
+            font-size: 32px;
+            padding: 10px 20px;
+            background: #FCD9D0;
+            color: #7A8CA1;
+            border-radius: 10px;
+            height: 60px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .header-user-info {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 10px 20px;
+            background: #FCD9D0;
+            border-radius: 10px;
+            height: 60px;
+            cursor: pointer;
+        }
+
+        .header-user-details {
+            color: #7A8CA1;
+            font-family: 'Manrope', sans-serif;
+        }
+
+        .header-username {
+            font-weight: 600;
+            font-size: 14px;
+        }
+
+        .header-story-time {
+            font-size: 12px;
+            opacity: 0.8;
+        }
+
+        /* 提示框样式 */
+        .username-tooltip {
+            position: absolute;
+            top: 0;
+            left: 0;
+            background-color: rgba(50, 50, 50, 0.85);
+            color: #fff;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 0.8rem;
+            z-index: 1002;
+            display: none;
+            white-space: nowrap;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.2);
+            font-family: 'Manrope', sans-serif;
+        }
+    </style>
+</head>
+<body>
+    <!-- 提示框元素 -->
+    <div id="username-tooltip" class="username-tooltip"></div>
+    
+    <div class="story-title-header">
+        <div class="title-text">Scene3: Taking Selfie</div>
+        <div class="header-user-info">
+            <div class="header-user-details">
+                <div class="header-username">she.was.online</div>
+                <div class="header-story-time">1 week ago</div>
+            </div>
+        </div>
+    </div>
+    <div id="p5-canvas"></div>
+    <div class="scroll-container">
+        <div class="scroll-section">
+            <div class="page-image">
+                <img src="./scene3/assets/1.webp" alt="图片3.5">
+            </div>
+            <div class="step">
+                <div class="content-box">
+                    <div class="text-content">
+                        <p class="text-line">As creators professionalize, content production shifts toward polished, platform-ready forms.</p>
+                        <p class="text-line">Authentic moments are filtered, formatted, and staged.</p>
+                        <p class="text-line">Let's see how a simple smile becomes a platform-approved image.</p>
+                    </div>
+                    <div class="button-container">
+                        <button id="next-page-button">Taking Selfie</button>
+                        <div class="button-hint">*Camera access required to continue*</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+     
+
+        // 页面加载代码
+        document.addEventListener('DOMContentLoaded', () => {
+            // 添加按钮点击监听器
+            const nextPageButton = document.getElementById('next-page-button');
+            if (nextPageButton) {
+                nextPageButton.addEventListener('click', () => {
+                    // 添加淡出效果
+                    document.body.classList.add('fade-out');
+                    // 等待淡出，然后重定向
+                    setTimeout(() => {
+                        window.location.href = './scene3/selfie.html';
+                    }, 500);
+                });
+            }
+            
+            // 提示框逻辑
+            const userInfoContainer = document.querySelector('.header-user-info');
+            const tooltipElement = document.getElementById('username-tooltip');
+
+            if (userInfoContainer && tooltipElement) {
+                userInfoContainer.addEventListener('mouseenter', (event) => {
+                    const rect = userInfoContainer.getBoundingClientRect();
+                    const tooltipText = "You're revisiting a memory from she.was.online — from 1 week ago.";
+                    
+                    tooltipElement.innerHTML = tooltipText;
+                    tooltipElement.style.display = 'block';
+                    
+                    // 获取提示框尺寸
+                    const tooltipRect = tooltipElement.getBoundingClientRect();
+
+                    // 在容器下方居中定位提示框
+                    tooltipElement.style.top = `${rect.bottom + window.scrollY + 5}px`;
+                    tooltipElement.style.left = `${rect.left + window.scrollX + (rect.width / 2) - (tooltipRect.width / 2)}px`;
+                });
+
+                userInfoContainer.addEventListener('mouseleave', () => {
+                    tooltipElement.style.display = 'none';
+                });
+            }
+        });
+    </script>
+</body>
+</html>
+

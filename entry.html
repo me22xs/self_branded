@@ -1,0 +1,373 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Entry</title>
+    <link rel="icon" type="image/webp" href="./homepage_assets/favicon.webp">
+    <!-- 添加Manrope字体 -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@300;400;500;600&display=swap" rel="stylesheet">
+    <!-- 添加Cormorant Garamond字体 -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300..700;1,300..700&display=swap" rel="stylesheet">
+    <style>
+        html, body {
+            width: 100%;
+            height: 100%;
+            margin: 0;
+            padding: 0;
+            font-family: Arial, sans-serif;
+            overflow: hidden; /* Restore hidden overflow for non-scrollable page */
+            height: 100vh; /* Restore fixed viewport height */
+            /* REMOVED position: fixed; */
+        }
+
+        body {
+            min-height: 100vh; /* Ensure body takes at least full viewport height */
+            /* REMOVED overflow: hidden; */
+            /* Apply background similar to main.html's settings-image */
+            background-image: url('./main_image/background.webp');
+            background-size: cover; /* Or 'contain' or specific size */
+            background-position: center center;
+            background-repeat: no-repeat;
+            background-attachment: fixed; /* Keep fixed for parallax effect */
+            /* display: flex; /* Flex might not be needed if overlay/nav are fixed */
+            /* justify-content: center; */
+            /* align-items: center; */
+            
+            /* 添加淡入过渡效果 */
+            opacity: 0;
+            transition: opacity 0.8s ease-in-out;
+        }
+
+        /* 添加已加载状态的样式 */
+        body.loaded {
+            opacity: 1;
+        }
+
+        /* Styles copied from main.html for the popup */
+        .popup-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100vh;
+            display: none; /* Initially hidden, JS will show it */
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+            /* Overlay is now essentially transparent, only used for centering */
+        }
+
+        .custom-popup-window {
+            position: relative;
+            width: 33%; /* Keep consistent with main.html */
+            background: none;
+            padding: 0;
+            border: none;
+        }
+
+        .custom-popup-border {
+            display: block;
+            width: 100%;
+            height: auto;
+        }
+
+        .custom-popup-close-button {
+            position: absolute;
+            top: 15px; /* Keep consistent with main.html */
+            right: 25px; /* Keep consistent with main.html */
+            width: 30px;
+            height: auto;
+            z-index: 3;
+            cursor: pointer;
+            transition: transform 0.2s ease;
+        }
+         .custom-popup-close-button:hover {
+             transform: scale(1.1);
+         }
+
+        .custom-popup-content-area {
+            position: absolute;
+            top: 15%;
+            left: 10%;
+            width: 80%;
+            height: 70%;
+            z-index: 2;
+            padding: 20px;
+            color: #333;
+            text-align: left;
+            overflow-y: auto;
+            font-size: 16px;
+            line-height: 1.5;
+            box-sizing: border-box;
+            font-family: 'Manrope', sans-serif; /* 添加Manrope字体 */
+            /* Add a subtle background to content area if needed for readability */
+            /* background-color: rgba(255, 255, 255, 0.8); */
+            /* border-radius: 5px; */
+        }
+
+        .custom-popup-content-area .username {
+             font-size: 24px;
+             color: #555;
+             margin: 15px 0;
+             font-weight: bold; /* Make title stand out */
+             font-family: 'Manrope', sans-serif; /* 添加Manrope字体 */
+        }
+
+        .custom-popup-content-area .stats {
+             /* Hide stats div by default for this popup */
+             display: none;
+        }
+
+        .custom-popup-content-area .bio {
+             margin-top: 20px;
+             font-size: 16px;
+             line-height: 1.5;
+             color: #333;
+        }
+         .custom-popup-content-area .bio-line {
+             margin: 8px 0;
+             font-family: 'Manrope', sans-serif; /* 使用Manrope字体 */
+         }
+
+        /* Scroll hint for popup */
+        .popup-scroll-hint {
+            /* Position adjusted for inside popup */
+            /* position: absolute; NO - relative to content flow */ 
+            /* bottom: 30px; NO */
+            /* left: 50%; NO */
+            /* transform: translateX(-50%); NO */
+            color: #555; /* Darker color for white background */
+            z-index: 10;
+            /* cursor: pointer; NO - not clickable */
+            animation: floatUpDown 1.5s ease-in-out infinite;
+            /* text-shadow: 0 0 10px rgba(255, 255, 255, 0.5); NO - dark text */
+            opacity: 0.8;
+            transition: all 0.3s ease;
+            /* Add flex layout */
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 3px; /* Reduced gap */
+            margin-bottom: 15px; /* Space below hint, above title */
+            padding-top: 5px; /* Add some padding above */
+        }
+
+        /* Style for the added text span */
+        .popup-scroll-hint span {
+            font-size: 13px; /* Slightly smaller */
+            font-family: 'Manrope', sans-serif;
+            font-weight: 500;
+            letter-spacing: 0.5px;
+        }
+
+        /* Style for the arrow character itself */
+        .popup-scroll-hint .arrow-char {
+            font-size: 20px; /* Smaller arrow */
+            line-height: 1; /* Adjust line height */
+        }
+
+        /* Keyframes for the floating animation (Copied from index.html) */
+        @keyframes floatUpDown {
+            0%, 100% {
+                transform: translateY(0);
+            }
+            50% {
+                transform: translateY(-5px); /* Adjust vertical distance as needed */
+            }
+        }
+
+        /* Styles copied from main.html for the nav sidebar */
+        .nav-sidebar {
+            width: 15vw;
+            height: 100vh;
+            padding: 4vw 4vw;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            position: fixed;
+            left: 0;
+            top: 0;
+            /* Adjust z-index to be above transparent overlay */
+            z-index: 1001; /* Above overlay (1000) */
+        }
+
+        .nav-item {
+            position: relative;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer; /* Restore clickable cursor */
+            text-decoration: none;
+            color: white; /* Keep text color */
+            font-family: 'Cormorant Garamond', serif;
+            padding: 10px; /* 从11px改回10px */
+            border-radius: 8px;
+            transition: all 0.3s ease;
+            width: fit-content;
+            /* Restore hover effects */
+            /* transform: none; */
+            /* text-shadow: none; */
+        }
+
+        .nav-item:hover {
+             /* Restore hover effect */
+             transform: translateY(-2px); 
+             text-shadow: 0 0 8px rgba(255, 255, 255, 0.7);
+        }
+        
+        /* 为活动导航项添加标识 */
+        .nav-item.active {
+            position: relative;
+            font-weight: 600; /* 增加加粗效果 */
+        }
+        
+        /* 添加小细线和小圆点组合 */
+        .nav-item.active::before {
+            content: "";
+            position: absolute;
+            left: -15px;
+            top: 50%;
+            transform: translateY(-50%);
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background-color: white;
+            box-shadow: 0 0 5px rgba(255, 255, 255, 0.5);
+        }
+        
+        .nav-item.active::after {
+            content: "";
+            position: absolute;
+            left: -4px;
+            top: 50%;
+            transform: translateY(-50%);
+            width: 12px;
+            height: 1px;
+            background-color: white;
+            box-shadow: 0 0 3px rgba(255, 255, 255, 0.5);
+        }
+
+        .nav-item span {
+            font-size: 16px; /* 从17px改回16px */
+            text-align: center;
+        }
+
+    </style>
+</head>
+<body>
+
+    <!-- Nav Sidebar copied from main.html -->
+    <nav class="nav-sidebar">
+        <a href="./index.html" class="nav-item" data-page="home">
+            <span>HomePage</span>
+        </a>
+        <a href="./index.html#about" class="nav-item" data-page="about">
+            <span>About</span>
+        </a>
+        <a href="./index.html#instruction" class="nav-item" data-page="instruction">
+            <span>Instruction</span>
+        </a>
+        <a href="./index.html#background" class="nav-item" data-page="background">
+            <span>Project Background</span>
+        </a>
+        <a href="./entry.html" class="nav-item active" data-page="start">
+            <span>Start Performing</span>
+        </a>
+    </nav>
+
+    <!-- Popup Structure copied from main.html -->
+    <div class="popup-overlay" id="avatarPopup">
+        <div class="custom-popup-window">
+            <img src="./main_image/window1.webp" alt="Popup Border" class="custom-popup-border">
+            <img src="./main_image/window2.webp" alt="Close" class="custom-popup-close-button" id="customCloseButton" style="display: none;">
+            <div class="custom-popup-content-area">
+                <!-- Content will be populated by JS -->
+                <div class="username"></div>
+                <div class="stats">
+                    <!-- Stats not needed for '提示' content, kept for structure consistency -->
+                    <div></div>
+                    <div></div>
+                    <div></div>
+                </div>
+                <div class="bio">
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            // 添加淡入效果
+            setTimeout(() => {
+                document.body.classList.add('loaded');
+            }, 100);
+            
+            const popupOverlay = document.getElementById('avatarPopup');
+            const popupContent = popupOverlay.querySelector('.custom-popup-content-area');
+            const usernameDiv = popupContent.querySelector('.username');
+            const statsDiv = popupContent.querySelector('.stats');
+            const bioDiv = popupContent.querySelector('.bio');
+            const closeButton = document.getElementById('customCloseButton');
+
+            // --- Populate Content (Using new text) ---
+            usernameDiv.textContent = 'Start Here'; // Keep title as 'Start Here'
+            statsDiv.style.display = 'none';   // Ensure stats are hidden
+            bioDiv.innerHTML = `
+                 <div class="popup-scroll-hint">
+                     <span>Scroll Down</span>
+                     <span class="arrow-char">&#x25BC;</span>
+                 </div>
+                 <p style="font-family: 'Manrope', sans-serif;"><strong>✦ You're about to enter the fictional workspace of a self-branding creator.</strong></p>
+                 <p style="font-family: 'Manrope', sans-serif;"><strong>✦ Click on the three objects on the desk to access the scenes:</strong></p>
+                 <ul style="list-style: none; padding-left: 20px; margin: 5px 0;">
+                   <li style="font-family: 'Manrope', sans-serif;">&nbsp;&nbsp;&nbsp;&nbsp;— Scene 1: Posting</li>
+                   <li style="font-family: 'Manrope', sans-serif;">&nbsp;&nbsp;&nbsp;&nbsp;— Scene 2: Replying</li>
+                   <li style="font-family: 'Manrope', sans-serif;">&nbsp;&nbsp;&nbsp;&nbsp;— Scene 3: Taking Selfies</li>
+                 </ul>
+                 <p style="font-family: 'Manrope', sans-serif;">✦ The first two scenes begin with a short scrolling narrative (3–4 screens).</p>
+                 <p style="font-family: 'Manrope', sans-serif;">✦ After that, you'll enter the interactive interface.</p>
+                 <p style="font-family: 'Manrope', sans-serif;">✦ Through this fictional platform environment, experience self-expression on social media—and sense the hidden labour behind it.</p>
+                 <div style="text-align: center; margin-top: 30px;">
+                    <button id="startButton" style="padding: 10px 40px; background: #E1CBF6; border: 1px solid #C8A0C0; border-radius: 6px; cursor: pointer; font-size: 16px; color: #3e3e3e; transition: all 0.3s ease; font-family: 'Manrope', sans-serif;">Start</button>
+                 </div>
+            `;
+            // --- End Populate Content ---
+
+            // --- Show Popup ---
+            popupOverlay.style.display = 'flex';
+            // --- End Show Popup ---
+
+            // --- Close Button Action (移除或隐藏) ---
+            if (closeButton) {
+                closeButton.style.display = 'none'; // 隐藏关闭按钮
+            }
+            
+            // --- 添加开始按钮事件 ---
+            const startButton = document.getElementById('startButton');
+            if (startButton) {
+                startButton.addEventListener('click', () => {
+                    // 跳转到main.html
+                    window.location.href = 'main.html';
+                });
+                
+                // 添加悬停效果
+                startButton.addEventListener('mouseenter', () => {
+                    startButton.style.transform = 'scale(1.05)';
+                    startButton.style.boxShadow = '0 4px 8px rgba(0,0,0,0.1)';
+                });
+                
+                startButton.addEventListener('mouseleave', () => {
+                    startButton.style.transform = 'scale(1)';
+                    startButton.style.boxShadow = 'none';
+                });
+            }
+        });
+    </script>
+
+</body>
+</html> 

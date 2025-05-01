@@ -1,0 +1,737 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Self-Branded</title>
+    <link rel="icon" type="image/webp" href="./homepage_assets/favicon.webp">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.4.0/p5.js"></script>
+    <!-- 添加Manrope字体 -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@300;400;500;600&display=swap" rel="stylesheet">
+    <style>
+        /* 基础样式 */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            scroll-behavior: smooth; /* 添加平滑滚动效果 */
+        }
+
+        html, body {
+            width: 100%;
+            height: 100%;
+            margin: 0;
+            padding: 0;
+            font-family: Arial, sans-serif;
+            /* 移除固定定位和隐藏滚动，使页面可以滚动 */
+        }
+
+        /* 每一页的基本样式 */
+        .page {
+            width: 100%;
+            height: 100vh;
+            position: relative;
+            overflow: hidden;
+        }
+
+        /* 首页样式 */
+        #home {
+            background-image: url('./homepage_assets/background.webp');
+            background-size: cover;
+            background-position: center center;
+            background-repeat: no-repeat;
+            background-attachment: fixed;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            will-change: transform; /* 优化性能，减少晃动 */
+            transform: translateZ(0); /* 强制GPU加速 */
+            -webkit-backface-visibility: hidden; /* 防止Safari中的晃动 */
+            backface-visibility: hidden;
+        }
+
+        /* About页面特别高度 */
+        #about {
+            background-size: cover;
+            background-position: center center;
+            background-repeat: no-repeat;
+            background-attachment: fixed;
+            display: flex;
+            align-items: flex-start; /* 改为顶部对齐，不再居中 */
+            justify-content: center;
+            flex-direction: row;
+            color: white;
+            padding: 10vh 5% 0 18%; /* 上边距从15vh改为10vh */
+            text-align: left;
+            will-change: transform;
+            transform: translateZ(0);
+            -webkit-backface-visibility: hidden;
+            backface-visibility: hidden;
+            height: 145vh; /* 从150vh改为145vh */
+        }
+
+        /* About页文字内容区 */
+        .about-content {
+            width: 55%;
+            max-width: 700px;
+            padding-right: 40px;
+        }
+
+        /* 视频容器 */
+        .video-container {
+            width: 45%;
+            max-width: 500px;
+            display: flex;
+            flex-direction: column; /* 改为竖向排列 */
+            justify-content: center;
+            align-items: center;
+            gap: 30px; /* 视频之间的间距 */
+            padding: 6% 1% 6% 3%; /* 内边距从5%改为6% */
+            margin-left: 5px; /* 向右移动5px */
+        }
+
+        /* 单个视频块样式 */
+        .video-item {
+            width: 100%;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            position: relative; /* Needed for absolute positioning of tooltip */
+        }
+
+        .video-item video {
+            width: 95%; /* Reduced width by 5% */
+            height: auto;
+            border-radius: 8px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+        }
+
+        .video-caption {
+            margin-top: 10px;
+            font-size: 0.9rem;
+            color: white;
+            text-align: center;
+            font-style: italic;
+            text-shadow: 0 0 5px rgba(0, 0, 0, 0.5);
+        }
+
+        /* Hover tooltip styles */
+        .video-hover-tooltip {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(26, 42, 69, 1); /* Deep blue, fully opaque (alpha 1) */
+            color: white;
+            padding: 20px; /* Adjust padding for full container */
+            border-radius: 6px;
+            text-align: center;
+            font-size: 16px; /* Increased font size */
+            font-family: 'Manrope', sans-serif;
+            line-height: 1.5;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+            pointer-events: none; /* Prevent tooltip from blocking hover */
+            z-index: 2; /* Ensure tooltip is above video */
+            box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .video-item:hover .video-hover-tooltip {
+            opacity: 1;
+        }
+
+        #about h1 {
+            margin-bottom: 30px;
+            font-size: 34px;
+            text-shadow: 0 0 8px rgba(100, 130, 180, 0.9);
+        }
+
+        #about h2 {
+            font-size: 1.65rem;
+            margin-top: 20px;
+            margin-bottom: 15px;
+            text-shadow: 0 0 8px rgba(100, 130, 180, 0.9);
+        }
+
+        #about p {
+            line-height: 2;
+            margin-bottom: 15px;
+            font-size: 1.1rem;
+            color: white;
+            text-shadow: 0 0 2px rgba(100, 130, 180, 0.9);
+            font-family: 'Manrope', sans-serif; /* 添加Manrope字体 */
+        }
+
+        /* 导航栏样式 - 与main.html完全一致 */
+        .nav-sidebar {
+            width: 23vw; /* 增加宽度，防止文字换行 */
+            height: 100vh;
+            padding: 4vw 4vw;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            position: fixed;
+            left: 0;
+            top: 0;
+            z-index: 100; /* 提高z-index确保在最上层 */
+        }
+
+        .nav-item {
+            position: relative;
+            display: flex;
+            align-items: center;
+            justify-content: flex-start; /* 左对齐而不是居中 */
+            cursor: pointer;
+            text-decoration: none;
+            color: white;
+            font-family: serif; /* 修改为系统默认衬线字体 */
+            padding: 10px;
+            border-radius: 8px;
+            transition: all 0.3s ease;
+            width: fit-content; /* 恢复为自适应宽度 */
+        }
+
+        .nav-item:hover {
+            transform: translateY(-2px); /* Add float effect */
+            text-shadow: 0 0 8px rgba(255, 255, 255, 0.7); /* Add glow effect */
+        }
+        
+        /* 为活动导航项添加标识 */
+        .nav-item.active {
+            position: relative;
+            font-weight: 600; /* 增加加粗效果 */
+        }
+        
+        /* 添加小细线和小圆点组合 */
+        .nav-item.active::before {
+            content: "";
+            position: absolute;
+            left: -15px;
+            top: 50%;
+            transform: translateY(-50%);
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background-color: white;
+            box-shadow: 0 0 5px rgba(255, 255, 255, 0.5);
+        }
+        
+        .nav-item.active::after {
+            content: "";
+            position: absolute;
+            left: -4px;
+            top: 50%;
+            transform: translateY(-50%);
+            width: 12px;
+            height: 1px;
+            background-color: white;
+            box-shadow: 0 0 3px rgba(255, 255, 255, 0.5);
+        }
+
+        .nav-item span {
+            font-size: 16px;
+            text-align: left; /* 文本左对齐 */
+        }
+
+        /* 内容区域，在logo下面 */
+        .content-container {
+            position: absolute;
+            bottom: 15%; /* Increase bottom value to move it up (from 8%) */
+            left: 50%;
+            transform: translateX(-50%);
+            color: white;
+            text-align: center;
+            z-index: 10;
+        }
+
+        /* p5.js画布容器 */
+        #p5-canvas {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 5; /* 确保画布在背景上方，但在其他元素下方 */
+        }
+
+        /* 下滑箭头样式 */
+        .scroll-down {
+            position: absolute;
+            bottom: 30px; /* Slightly adjusted bottom */
+            left: 50%;
+            transform: translateX(-50%);
+            color: white;
+            z-index: 10;
+            cursor: pointer;
+            animation: float 1.5s ease-in-out infinite;
+            text-shadow: 0 0 10px rgba(255, 255, 255, 0.5);
+            opacity: 0.8;
+            transition: all 0.3s ease;
+            /* Add flex layout */
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 5px; /* Space between text and arrow */
+        }
+
+        /* Style for the added text span */
+        .scroll-down span {
+            font-size: 14px;
+            font-family: 'Manrope', sans-serif;
+            font-weight: 500;
+            letter-spacing: 0.5px;
+        }
+
+        /* Style for the arrow character itself */
+        .scroll-down .arrow-char {
+            font-size: 26px; /* Reduced arrow size from 30px */
+            line-height: 1; /* Adjust line height */
+        }
+
+        /* About页面下滑箭头特定样式 */
+        #about .scroll-down {
+            bottom: 35px; /* About页面的箭头距离底部35px */
+        }
+
+        @keyframes float {
+            0%, 100% {
+                transform: translateX(-50%) translateY(0);
+            }
+            50% {
+                transform: translateX(-50%) translateY(-15px); /* Increased movement */
+            }
+        }
+
+        /* 添加一个固定的背景层，确保滚动时背景稳定 */
+        body::before {
+            content: "";
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: -1;
+            background-image: url('./homepage_assets/background.webp');
+            background-size: cover;
+            background-position: center center;
+            background-repeat: no-repeat;
+        }
+
+        /* 移除各部分的背景设置，使用body的固定背景 */
+        #home, #about, #instruction {
+            background: none;
+        }
+
+        /* 添加重点文本样式 */
+        .highlight {
+            color: #39598e;
+            font-weight: 500;
+        }
+        
+        /* 仅为About部分的高亮文字设置特定颜色 */
+        #about .highlight {
+            color: #ffecaa;
+        }
+
+        /* Instruction页面特别高度 */
+        #instruction {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-direction: row;
+            color: white;
+            padding: 0 5% 0 18%;
+            text-align: left;
+            will-change: transform;
+            transform: translateZ(0);
+            -webkit-backface-visibility: hidden;
+            backface-visibility: hidden;
+            height: 110vh;
+        }
+
+        /* 添加悬停效果 - 保留但不应用于About部分 */
+        .highlight:hover {
+            color: #6b8bc3; /* 悬停时颜色变亮 */
+            text-shadow: 0 0 5px rgba(107, 139, 195, 0.5);
+        }
+        
+        /* 移除About部分的高亮文字悬停效果 */
+        #about .highlight:hover {
+            color: #ffecaa; /* 保持颜色不变 */
+            text-shadow: none;
+        }
+
+        /* Project Background页面高度 */
+        #background {
+            height: 110vh;
+        }
+    </style>
+</head>
+<body>
+    <!-- 导航栏 - 与main.html完全一致 -->
+    <nav class="nav-sidebar">
+        <a href="#home" class="nav-item active" data-page="home">
+            <span>HomePage</span>
+        </a>
+        <a href="#about" class="nav-item" data-page="about">
+            <span>About</span>
+        </a>
+        <a href="#instruction" class="nav-item" data-page="instruction">
+            <span>Instruction</span>
+        </a>
+        <a href="#background" class="nav-item" data-page="background">
+            <span>Project Background</span>
+        </a>
+        <a href="./entry.html" class="nav-item" data-page="start">
+            <span>Start Performing</span>
+        </a>
+    </nav>
+
+    <!-- 首页部分 -->
+    <section id="home" class="page">
+        <!-- 首页额外背景层 -->
+        <div style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; background-image: url('./homepage_assets/background2.webp'); background-size: cover; background-position: center center; z-index: 1;"></div>
+        
+        <!-- p5.js画布容器 -->
+        <div id="p5-canvas" style="z-index: 5;"></div>
+        
+        <!-- 内容区域 -->
+        <div class="content-container">
+            <p style="font-family: 'Manrope', sans-serif; font-size: 17px; line-height: 1.65;">an interactive experience about self-branding and invisible digital labor</p>
+        </div>
+
+        <!-- 下滑箭头 -->
+        <div class="scroll-down">
+            <span>Scroll Down</span>
+            <span class="arrow-char">&#x25BC;</span>
+        </div>
+    </section>
+
+    <!-- About部分 -->
+    <section id="about" class="page">
+        <div class="about-content">
+            <h1>About</h1>
+            <p>This project is a web-based interactive  narrative installation inviting viewers to perform as a <span class="highlight">female self-branding content creator</span> within a <span class="highlight">constructed abstract platform environment</span>.</p>
+            
+            <p>The project focuses on the <span class="highlight">invisible digital labor</span> involved in women's self-branding on platforms such as Instagram. It particularly focuses on the ongoing emotional management and adaptation to algorithmic norms behind content production. These forms of labor are often naturalized, quantified, and ultimately overlooked by the platform.</p>
+            
+            <p>The project presents three interactive scenes—posting, replying to comments, and taking selfies—that show how <span class="highlight">aesthetic norms</span> and <span class="highlight">algorithms</span> shape digital <span class="highlight">self-expression and identity</span>. Through these seemingly simple actions, viewers can experience the <span class="highlight">time and effort</span> that creators put in to match their <span class="highlight">imagined sense of the platform's affordances</span>.</p>
+            
+            <h2>The project invites viewers to reflect on two key questions:</h2>
+            <p>1. Are these seemingly effortless actions genuine acts of self-expression, or are they shaped by platform norms and algorithmic pressures?</p>
+            
+            <p>2. Does the popular "that girl" narrative—centered on positivity, discipline, and having it all—truly represent female empowerment? Or does it reflect a new form of normative control shaped by digital platforms?</p>
+            
+            <h2>Project perspective</h2>
+            <p>The project uses structured interaction to unpack and question the realities shaped by digital platforms. It does not aim to provide clear answers, but encourages viewers to reflect and interpret for themselves.</p>
+        </div>
+        <div class="video-container">
+            <div class="video-item">
+                <video autoplay loop muted playsinline>
+                    <source src="./homepage_assets/scene1.mp4" type="video/mp4">
+                    您的浏览器不支持视频标签。
+                </video>
+                <div class="video-hover-tooltip">Experience these scenes: Click 'Start Performing' in navigation.</div>
+                <div class="video-caption">Scene1: Posting · preview</div>
+            </div>
+            
+            <div class="video-item">
+                <video autoplay loop muted playsinline>
+                    <source src="./homepage_assets/scene2.mp4" type="video/mp4">
+                    您的浏览器不支持视频标签。
+                </video>
+                <div class="video-hover-tooltip">Experience these scenes: Click 'Start Performing' in navigation.</div>
+                <div class="video-caption">Scene2: Replying · preview</div>
+            </div>
+            
+            <div class="video-item">
+                <video autoplay loop muted playsinline>
+                    <source src="./homepage_assets/scene3.mp4" type="video/mp4">
+                    您的浏览器不支持视频标签。
+                </video>
+                <div class="video-hover-tooltip">Experience these scenes: Click 'Start Performing' in navigation.</div>
+                <div class="video-caption">Scene3: Selfie · preview</div>
+            </div>
+        </div>
+
+        <!-- 下滑箭头 -->
+        <div class="scroll-down">
+            <span>Scroll Down</span>
+            <span class="arrow-char">&#x25BC;</span>
+        </div>
+    </section>
+
+    <!-- Instruction部分 -->
+    <section id="instruction" class="page">
+        <!-- Instruction背景层和内容 -->
+        <div style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; display: flex; justify-content: center; align-items: center; z-index: 5;">
+            <img src="./homepage_assets/background3.webp" alt="" style="max-width: 85%; max-height: 100%; position: relative; left: 1%;">
+            
+            <!-- 所有内容包裹在一个相对于图片的容器中，完全居中对齐 -->
+            <div style="position: absolute; width: 80%; height: 90%; top: 50%; left: 50%; transform: translate(-50%, -50%);">
+                <!-- Instruction标题 - 水平居中 -->
+                <h1 style="position: absolute; width: 100%; top: 0.5%; text-align: center; color: white; font-size: 34px;">Instruction</h1>
+                
+                <!-- 左页 - Before You Start (Moved from right) -->
+                <div style="position: absolute; left: 0%; top: 48%; transform: translateY(-50%); width: 50%; padding: 2% 5% 2% 7%; color: #39598e; font-family: 'Manrope', sans-serif;">
+                    <h2 style="font-size: 24px; margin-bottom: 20px;">Before You Start</h2>
+                    <p style="line-height: 1.65; font-size: 16px;">This experience runs best on desktop <strong>(Chrome recommended)</strong>. You'll need an internet connection. If you encounter issues with Chrome, try Safari or Firefox.</p><br>
+                    <p style="line-height: 1.65; font-size: 16px;"><strong>No data is collected</strong> — your inputs stay on your device and reset when you refresh.</p>
+                    <p style="line-height: 1.65; font-size: 16px;">Scene 2 uses simple <strong>sentiment analysis</strong> (positive / neutral / negative).</p>
+                    <p style="line-height: 1.65; font-size: 16px;">Scene 3 uses your <strong>webcam</strong> to check if you're smiling — no images are saved.</p><br>
+                    <p style="line-height: 1.65; font-size: 16px;">These features reflect how platforms reduce emotion to fixed categories — <strong>a data feminist critique</strong> of how classification systems, though seemingly neutral, embed power.</p>
+                </div>
+                
+                <!-- 右页 - How to Participate (Moved from left) -->
+                <div style="position: absolute; left: 50%; top: 46%; transform: translateY(-50%); width: 50%; padding: 2% 5% 2% 8%; color: #39598e; font-family: 'Manrope', sans-serif;">
+                    <h2 style="font-size: 24px; margin-bottom: 20px;">How to Participate</h2>
+                    <p style="line-height: 1.65; font-size: 16px;">Click <a href="./entry.html" class="highlight" style="text-decoration: underline; font-weight: 500; transition: all 0.3s ease; color: #3042ff;">"Start Performing"</a> to enter the interactive workspace.</p>
+                    <p style="line-height: 1.65; font-size: 16px;">You'll find three digital devices on the desk — each opens a different scene.</p>
+                    <p style="line-height: 1.65; font-size: 16px;">Every scene begins with a short scrollable narrative before the interaction begins.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Project Background部分 -->
+    <section id="background" class="page">
+        <!-- Background背景层 - 调整 z-index 并保持与 instruction 一致 -->
+        <div style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; display: flex; justify-content: center; align-items: center; z-index: 5;">
+            <img src="./homepage_assets/background3.webp" alt="" style="max-width: 85%; max-height: 100%; position: relative; left: 1%;">
+        </div>
+        
+        <!-- 添加与 instruction 一致的内容包裹容器 -->
+        <div style="position: absolute; width: 80%; height: 90%; top: 50%; left: 50%; transform: translate(-50%, -50%); z-index: 10;">
+            <!-- Background标题 - 保持原有样式 -->
+            <h1 style="position: absolute; width: 100%; top: 0.5%; text-align: center; color: white; font-size: 34px;">Project Background</h1>
+            
+            <!-- 左页 - 调整定位、宽度和内边距以匹配 instruction -->
+            <div style="position: absolute; left: 0%; top: 48%; transform: translateY(-50%); width: 50%; padding: 2% 5% 2% 7%; color: #39598e; font-family: 'Manrope', sans-serif;">
+                <h2 style="font-size: 20px; margin-bottom: 20px;"><strong>1. Thematic Focus</strong></h2>
+                <p style="line-height: 1.1; font-size: 15.5px;">This project investigates how <strong style="color: #4527a0;">self-branding on Instagram</strong> turns emotional expression into invisible labour. It focuses on female creators whose visibility depends on algorithm-friendly content, continuous self-adjustment, and aesthetic conformity—labours often dismissed as personal choice.</p>
+                <h2 style="font-size: 20px; margin-bottom: 20px; margin-top: 20px;"><strong>2. Critical Framework: Data Feminism</strong></h2>
+                <p style="line-height: 1.1; font-size: 15.5px;">Drawing on <strong style="color: #4527a0;">Data Feminism (D'Ignazio & Klein, 2020)</strong>, the project critiques how platforms use seemingly "neutral" systems to embed power. Interfaces don't just host content—they classify, filter, and train us to fit platform-ready categories. It shapes the way audiences and those being watched interact with each other.</p>
+                <h2 style="font-size: 20px; margin-bottom: 20px; margin-top: 20px;"><strong>3. Interaction as Method</strong></h2>
+                <p style="line-height: 1.1; font-size: 15.5px;">Instead of visualising labour through data charts, the project transforms platform norms into <strong style="color: #4527a0;">embodied interaction</strong>. Users post, reply, and take selfies—each task shaped by feedback loops that subtly pressure users to optimise emotions, tone, and identity for visibility.</p>
+                <h2 style="font-size: 20px; margin-bottom: 20px; margin-top: 20px;"><strong>4. Visual and Design Reference</strong></h2>
+                <p style="line-height: 1.1; font-size: 15.5px;">The visual design references the <strong style="color: #4527a0;">"that girl" aesthetic</strong>—an ideal of feminine productivity and wellness. This curated language of glow-ups and routines becomes a coded emotional script. By reproducing it interactively, the project reveals how platform norms aestheticise selfhood.</p>
+            </div>
+            
+            <!-- 右页内容 -->
+            <div style="position: absolute; left: 50%; top: 46%; transform: translateY(-50%); width: 50%; padding: 2% 5% 2% 8%; color: #39598e; font-family: 'Manrope', sans-serif;">
+                <h2 style="font-size: 20px; margin-bottom: 20px;"><strong>Innovation</strong></h2>
+                <p style="line-height: 1.1; font-size: 15.5px;">This project builds on prior empirical research (e.g. Duffy, 2017) that highlights the structural tensions self-branding creators face on platforms. Rather than analysing creators' narratives, it shifts from observation to simulation—turning those dynamics into embodied, interactive experiences.</p>
+                <p style="line-height: 1.1; font-size: 15.5px; margin-top: 15px;">While Data Feminism often critiques how data systems exclude or erase marginalised groups, this project exposes a quieter, more insidious violence: the labour required to remain visible within dominant norms.</p>
+                <p style="line-height: 1.1; font-size: 15.5px; margin-top: 15px;">It asks not who is left out, but <strong style="color: #4527a0;">what is lost when we fit in</strong>. By simulating emotional optimisation and aesthetic conformity, the project reveals how digital platforms turn self-expression into a form of soft compliance—where visibility is earned through self-surveillance, and regulation is disguised as self choice.</p>
+                <p style="line-height: 1.1; font-size: 15.5px; margin-top: 15px;">In this sense, the project extends data feminism's critique of classification, showing how even "successful" digital identities are governed from within.</p>
+            </div>
+        </div>
+    </section>
+
+    <script>
+        // 创建p5.js实例
+        let sketch = function(p) {
+            let letters = [];
+            const text = "SELF-BRANDED";
+            let spacing; // 字母间距，随屏幕大小调整
+            let startX;
+            let fontSize; // 字体大小，随屏幕大小调整
+            
+            // 字母对象类
+            class Letter {
+                constructor(char, x, y, stringLength, fontSize) {
+                    this.char = char;
+                    this.x = x;
+                    this.y = y;
+                    this.homeY = y; // 原始垂直位置
+                    this.homeX = x; // 原始水平位置
+                    this.stringLength = stringLength; // 线的长度
+                    this.fontSize = fontSize;
+                }
+                
+                // 更新字母位置以响应鼠标
+                update(mouseX, mouseY) {
+                    let dx = mouseX - this.x;
+                    let dy = mouseY - this.y;
+                    let distance = p.sqrt(dx * dx + dy * dy);
+                    
+                    // 如果鼠标足够靠近字母，产生拉力
+                    if (distance < 200) {
+                        let force = p.map(distance, 0, 200, 0.5, 0);
+                        this.x = p.lerp(this.x, mouseX, force * 0.1);
+                        this.y = p.lerp(this.y, mouseY, force * 0.1);
+                    } else {
+                        // 否则回归原始位置
+                        this.x = p.lerp(this.x, this.homeX, 0.1);
+                        this.y = p.lerp(this.y, this.homeY, 0.1);
+                    }
+                }
+                
+                // 绘制字母和它的线
+                display() {
+                    // 绘制线
+                    p.stroke(255); // 白色线条
+                    p.strokeWeight(2);
+                    p.line(this.x, this.y - this.fontSize/2, this.x, this.y - this.stringLength);
+                    
+                    // 绘制字母
+                    p.fill(255); // 白色文字
+                    p.noStroke();
+                    
+                    // 添加淡粉色阴影效果
+                    p.drawingContext.shadowOffsetX = 0;
+                    p.drawingContext.shadowOffsetY = 0;
+                    p.drawingContext.shadowBlur = 8;
+                    p.drawingContext.shadowColor = 'rgba(255, 204, 255, 0.5)';
+                    
+                    p.textSize(this.fontSize);
+                    p.textAlign(p.CENTER, p.CENTER);
+                    p.text(this.char, this.x, this.y);
+                    
+                    // 重置阴影效果，避免影响其他元素
+                    p.drawingContext.shadowOffsetX = 0;
+                    p.drawingContext.shadowOffsetY = 0;
+                    p.drawingContext.shadowBlur = 0;
+                    p.drawingContext.shadowColor = 'rgba(0, 0, 0, 0)';
+                }
+            }
+            
+            p.setup = function() {
+                let canvas = p.createCanvas(p.windowWidth, p.windowHeight);
+                canvas.parent('p5-canvas');
+                
+                p.textFont('serif'); // 修改为使用系统默认衬线字体
+                setupLetters();
+            };
+            
+            function setupLetters() {
+                letters = [];
+                
+                // 根据屏幕宽度调整字体大小和间距
+                fontSize = p.min(p.windowWidth * 0.065, 105); // 从0.08改为0.065，最大值从120改为105
+                spacing = fontSize * 0.62; // 从0.65改为0.62
+                
+                // 确保文本宽度不会太宽
+                let totalTextWidth = text.length * spacing;
+                while (totalTextWidth > p.width * 0.82) { // 从0.85改为0.82
+                    // 如果文本太宽，进一步减小字体和间距
+                    fontSize = fontSize * 0.9;
+                    spacing = spacing * 0.9;
+                    totalTextWidth = text.length * spacing;
+                }
+                
+                // 计算整个文本的宽度，使其居中
+                p.textSize(fontSize);
+                startX = (p.width - totalTextWidth) / 2 + spacing/2;
+                
+                const stringLength = fontSize * 3; // 线长度与字体成比例
+                
+                // 为每个字母创建一个对象
+                for (let i = 0; i < text.length; i++) {
+                    letters.push(new Letter(
+                        text[i], 
+                        startX + i * spacing, 
+                        p.height / 2,
+                        stringLength,
+                        fontSize
+                    ));
+                }
+            }
+            
+            p.draw = function() {
+                // 清除画布
+                p.clear();
+                
+                // 更新并显示每个字母
+                for (let letter of letters) {
+                    letter.update(p.mouseX, p.mouseY);
+                    letter.display();
+                }
+            };
+            
+            p.windowResized = function() {
+                p.resizeCanvas(p.windowWidth, p.windowHeight);
+                setupLetters(); // 重新计算字母位置和大小
+            };
+        };
+        
+        // 创建实例
+        new p5(sketch);
+
+        // 下滑箭头点击事件，在各部分之间导航
+        document.querySelectorAll('.scroll-down').forEach(arrow => {
+            arrow.addEventListener('click', function() {
+                const parentSection = this.closest('.page');
+                if (parentSection.id === 'home') {
+                    document.getElementById('about').scrollIntoView({ behavior: 'smooth' });
+                } else if (parentSection.id === 'about') {
+                    document.getElementById('instruction').scrollIntoView({ behavior: 'smooth' });
+                } else if (parentSection.id === 'instruction') {
+                    document.getElementById('background').scrollIntoView({ behavior: 'smooth' });
+                } else if (parentSection.id === 'background') {
+                    document.getElementById('home').scrollIntoView({ behavior: 'smooth' });
+                }
+            });
+        });
+
+        // 导航栏状态管理函数更新
+        function updateNavState() {
+            // 获取当前滚动位置
+            const scrollPosition = window.scrollY;
+            const homeSection = document.getElementById('home');
+            const aboutSection = document.getElementById('about');
+            const instructionSection = document.getElementById('instruction');
+            const backgroundSection = document.getElementById('background');
+            
+            // 根据滚动位置判断当前所在的部分
+            let currentPage;
+            if (scrollPosition < homeSection.offsetHeight - 100) {
+                currentPage = 'home';
+            } else if (scrollPosition < homeSection.offsetHeight + aboutSection.offsetHeight - 100) {
+                currentPage = 'about';
+            } else if (scrollPosition < homeSection.offsetHeight + aboutSection.offsetHeight + instructionSection.offsetHeight - 100) {
+                currentPage = 'instruction';
+            } else if (scrollPosition < homeSection.offsetHeight + aboutSection.offsetHeight + instructionSection.offsetHeight + backgroundSection.offsetHeight - 100) {
+                currentPage = 'background';
+            } else {
+                currentPage = 'start'; // 可以继续添加其他部分
+            }
+            
+            // 更新导航项状态
+            document.querySelectorAll('.nav-item').forEach(navItem => {
+                const isActive = navItem.dataset.page === currentPage;
+                navItem.classList.toggle('active', isActive);
+            });
+        }
+
+        // 监听滚动事件，更新导航栏状态
+        window.addEventListener('scroll', updateNavState);
+        
+        // 导航栏点击事件
+        document.querySelectorAll('.nav-item').forEach(item => {
+            item.addEventListener('click', (e) => {
+                const page = item.dataset.page;
+                const href = item.getAttribute('href');
+                
+                if (href === '#') {
+                    e.preventDefault();
+                    // 如果没有对应的部分，只更新状态
+                    document.querySelectorAll('.nav-item').forEach(navItem => {
+                        navItem.classList.toggle('active', navItem.dataset.page === page);
+                    });
+                }
+                // 有href的链接会自动滚动到对应部分，不需要额外处理
+            });
+        });
+
+        // 初始化导航栏状态
+        updateNavState();
+    </script>
+</body>
+</html>
