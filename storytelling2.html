@@ -294,13 +294,6 @@
         .title-text {
             font-family: 'Cookie', cursive;
             font-size: 32px;
-            padding: 10px 20px;
-            background: #2E3A67;
-            border-radius: 10px;
-            height: 60px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
             color: #FFDADA;
         }
 
@@ -353,12 +346,7 @@
     
     <div class="story-title-header">
         <div class="title-text">Scene2: Replying</div>
-        <div class="header-user-info">
-            <div class="header-user-details">
-                <div class="header-username">she.was.online</div>
-                <div class="header-story-time">3 months ago</div>
-            </div>
-        </div>
+        
     </div>
     <div class="black-overlay"></div>
     <div class="scroll-hint">↓ Scroll through the story to begin the interaction ↓</div>
@@ -379,8 +367,8 @@
             <div class="step">
                 <div class="content-box">
                     <div class="text-content">
-                        <p>As a self-branding creator,</p>
-                    </p>  I manage my social media account and plan what to post.</p>
+                        <p>I run my account.</p>
+                        <p>Every post needs planning.</p>
                     </div>
                 </div>
             </div>
@@ -391,7 +379,7 @@
             <div class="step">
                 <div class="content-box">
                     <div class="text-content">
-                        <p>Slowly, people start to notice.</p>
+                        <p>People start to notice.</p>
                         <p>It feels good to be seen.</p>
                     </div>
                 </div>
@@ -416,8 +404,8 @@
             <div class="step">
                 <div class="content-box">
                     <div class="text-content">
-                        <p>Tonight, like always,<p>
-                        </p>I sit back in front of the screen.</p>
+                        <p>Tonight, like always,</p>
+                        <p>I sit back at the screen.</p>
                         <p>One more comment. One more reply.</p>
                     </div>
                 </div>
@@ -1066,36 +1054,6 @@
                 });
 
             window.addEventListener('resize', scroller.resize);
-        });
-    </script>
-    
-    <script>
-        // Tooltip Logic
-        document.addEventListener('DOMContentLoaded', () => {
-            const userInfoContainer = document.querySelector('.header-user-info'); // Target the container
-            const tooltipElement = document.getElementById('username-tooltip');
-
-            if (userInfoContainer && tooltipElement) { 
-                userInfoContainer.addEventListener('mouseenter', (event) => { 
-                    const rect = userInfoContainer.getBoundingClientRect(); // Get container's rect
-                    const tooltipText = "You're revisiting a memory from she.was.online — from 3 months ago.";
-                    
-                    tooltipElement.innerHTML = tooltipText;
-                    tooltipElement.style.display = 'block'; // Show first to measure width
-                    
-                    // Get tooltip dimensions AFTER displaying it
-                    const tooltipRect = tooltipElement.getBoundingClientRect();
-
-                    // Position tooltip centered below the container
-                    tooltipElement.style.top = `${rect.bottom + window.scrollY + 5}px`; 
-                    // Calculate centered left position based on container
-                    tooltipElement.style.left = `${rect.left + window.scrollX + (rect.width / 2) - (tooltipRect.width / 2)}px`; 
-                });
-
-                userInfoContainer.addEventListener('mouseleave', () => { 
-                    tooltipElement.style.display = 'none';
-                });
-            }
         });
     </script>
 </body>

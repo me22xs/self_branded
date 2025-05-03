@@ -224,14 +224,7 @@
         .title-text {
             font-family: 'Cookie', cursive;
             font-size: 32px;
-            padding: 10px 20px;
-            background: #FCD9D0;
-            color: #7A8CA1;
-            border-radius: 10px;
-            height: 60px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
+            color: #FCD9D0;
         }
 
         .header-user-info {
@@ -284,12 +277,7 @@
     
     <div class="story-title-header">
         <div class="title-text">Scene3: Taking Selfie</div>
-        <div class="header-user-info">
-            <div class="header-user-details">
-                <div class="header-username">she.was.online</div>
-                <div class="header-story-time">1 week ago</div>
-            </div>
-        </div>
+        
     </div>
     <div id="p5-canvas"></div>
     <div class="scroll-container">
@@ -300,13 +288,12 @@
             <div class="step">
                 <div class="content-box">
                     <div class="text-content">
-                        <p class="text-line">As creators professionalize, content production shifts toward polished, platform-ready forms.</p>
-                        <p class="text-line">Authentic moments are filtered, formatted, and staged.</p>
-                        <p class="text-line">Let's see how a simple smile becomes a platform-approved image.</p>
+                        <p class="text-line">Not every smile is just a smile.</p>
+                        <p class="text-line">Try taking a selfie — and see what gets recognised.</p>
                     </div>
                     <div class="button-container">
                         <button id="next-page-button">Taking Selfie</button>
-                        <div class="button-hint">*Camera access required to continue*</div>
+                        <div class="button-hint">*Camera access required to continue*<br>No real face shown. The filter will "translate" you, just like platforms do.</div>
                     </div>
                 </div>
             </div>
@@ -331,30 +318,7 @@
                 });
             }
             
-            // 提示框逻辑
-            const userInfoContainer = document.querySelector('.header-user-info');
-            const tooltipElement = document.getElementById('username-tooltip');
-
-            if (userInfoContainer && tooltipElement) {
-                userInfoContainer.addEventListener('mouseenter', (event) => {
-                    const rect = userInfoContainer.getBoundingClientRect();
-                    const tooltipText = "You're revisiting a memory from she.was.online — from 1 week ago.";
-                    
-                    tooltipElement.innerHTML = tooltipText;
-                    tooltipElement.style.display = 'block';
-                    
-                    // 获取提示框尺寸
-                    const tooltipRect = tooltipElement.getBoundingClientRect();
-
-                    // 在容器下方居中定位提示框
-                    tooltipElement.style.top = `${rect.bottom + window.scrollY + 5}px`;
-                    tooltipElement.style.left = `${rect.left + window.scrollX + (rect.width / 2) - (tooltipRect.width / 2)}px`;
-                });
-
-                userInfoContainer.addEventListener('mouseleave', () => {
-                    tooltipElement.style.display = 'none';
-                });
-            }
+            
         });
     </script>
 </body>

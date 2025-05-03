@@ -650,6 +650,13 @@
             -webkit-backdrop-filter: none;
         }
 
+        /* 添加退出确认按钮hover效果 */
+        #confirmExitButton:hover,
+        #cancelExitButton:hover {
+            transform: scale(1.1);
+            box-shadow: 0 4px 8px rgba(0,0,0,0.15);
+        }
+
     </style>
 
 </head>
@@ -737,10 +744,10 @@
             <img src="./main_image/window1.webp" alt="Popup Border" class="custom-popup-border">
             <img src="./main_image/window2.webp" alt="Close" class="custom-popup-close-button" id="exitCloseButton">
             <div class="custom-popup-content-area">
-                <div class="username" style="font-size: 20px; font-weight: bold;">Confirm Exit</div>
+                <div class="username" style="font-size: 24px; font-weight: bold;">Confirm Exit</div>
                 <div class="stats" style="display: none;"></div>
                 <div class="bio" style="font-size: 16px;">
-                    <div class="bio-line">The page will refresh and clear your progress. <br>Click "Start Performing" to re-enter the experience.</div>
+                    
                     <br>
                     <div style="display: flex; justify-content: space-around; margin-top: 20px;">
                         <button id="confirmExitButton" style="padding: 8px 15px; background: #E1CBF6; border: 1px solid #C8A0C0; border-radius: 6px; cursor: pointer; font-family: 'Manrope', sans-serif;">Confirm</button>
@@ -877,14 +884,10 @@
             statsDiv.style.display = 'flex'; // Ensure stats are visible
 
             bioDiv.innerHTML = `
-                <div class="bio-line">Building a brand out of daily life.  </div>
-                <div class="bio-line">Photos, moments, little things.  </div>
-  
-                <br>
-                <div class="bio-line">It's not about showing everything.  </div>
+                <div class="bio-line">It's not about showing everything.</div>
                 <div class="bio-line">It's about showing what fits.</div>
                 <br>
-                <p style="font-size: 0.9em; color: #666; margin-top: 15px;"><em>This is a fictional creator profile designed for this interactive experience.</em></p>
+                <p style="font-size: 0.9em; color: #999; margin-top: 15px;"><em>This is a fictional creator profile designed for this interactive experience.</em></p>
             `;
         }
 
@@ -1021,15 +1024,16 @@
                 usernameDiv.textContent = 'Guide'; // Changed title to Guide
                 statsDiv.style.display = 'none'; // Hide stats for this view
                 bioDiv.innerHTML = `
-                     <p><strong>⚠ Refreshing the page will reset everything to the starting point.</strong></p>
-                     <br>
+                     <p style="font-size: 0.9em; color: #999; font-style: italic; margin-bottom: 15px;">Refreshing the page will reset everything to the starting point.</p>
+                     
                      <p>This is an interactive experiment about digital labour on Instagram.</p>
+                     <p>Once you enter the interactive part in each scene, you've experienced the core of this project.</p>
                      <p>You are now inside the fictional workspace of a self-branding creator.</p>
                      <p>Click on the phone, laptop, or camera to explore three scenes.</p>
                      <br>
                      <p>The first two scenes begin with a short scrollable narrative (approx. 3–4 screens).</p>
                      <p>After that, you'll reach the interactive interface.</p>
-                     <p>Once you enter the interactive part in each scene, you've experienced the core of this project.</p>
+                     
                 `;
 
                 popup.style.display = 'flex';
