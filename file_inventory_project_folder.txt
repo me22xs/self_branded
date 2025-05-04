@@ -1,4 +1,4 @@
-Project File Inventory for 'self-branded'
+Project File Inventory for 'self_branded'
 
 This document outlines the location of key files and assets within the project folder, particularly those referenced in the non-original components sheet.
 
@@ -20,33 +20,33 @@ This document outlines the location of key files and assets within the project f
 │       ├── slider.MP3           # Audio effect (Pixabay)
 │       ├── menu-select.MP3      # Audio effect (Pixabay)
 │       ├── notification.MP3     # Audio effect (Pixabay)
-│       └── 2.2.mp4              # AI-generated animation (Tencent DreamVideo) - used in storytelling.html
+│       └── 2.2.mp4              # AI-generated animation (Midjourney，Tencent DreamVideo) - used in storytelling.html
 ├── scene2/
 │   ├── Interaction.html       # Scene 2 Interaction (Loads p5.js, p5.sound, Remix Icon, Google Fonts, glitchEffect.js; contains OpenAI API call logic - backup only)
 │   ├── glitchEffect.js        # AI-assisted custom code for glitch effect
 │   ├── scene2_reflection.html   # Scene 2 Reflection page (Loads GSAP, Google Fonts)
 │   └── assets/
 │       ├── background8.webp     # AI-generated image (Midjourney) - background for Scene 2
-│       ├── *.webp               # Other potential AI/Canvas assets for Scene 2 narrative/reflection
+│       ├── 1.1.webp/3.1.webp/3.2.webp/3.3.webp/finial.webp   # AI-generated image (Midjourney), photoshop edited
 │       └── type.mp3             # Audio effect (Pixabay)
 ├── scene3/
 │   ├── selfie.html            # Scene 3 Interaction (Loads p5.js, MediaPipe via CDN, landmarks.js, Google Fonts)
 │   ├── landmarks.js           # Based on MediaPipe definitions
 │   └── assets/
-│       ├── background.webp      # Background image for Scene 3
+│       ├── background.webp      # Background image for Scene 3 (Original)
 │       └── camera-shutter.mp3   # Audio effect (Pixabay)
 ├── gsap-public/            # GSAP library files (as downloaded)
 ├── homepage_assets/        # Assets for index.html (backgrounds, favicon, videos etc.)
-│   ├── background.webp     # Homepage background
-│   ├── background2.webp    # Homepage background layer
-│   ├── background3.webp    # Notebook background (Canvas) - used in index.html Instruction/Background sections
-│   ├── popup.webp          # Popup window graphic (Canvas) - used in index.html Instruction/Background sections
-│   ├── scene1.mp4          # Preview video for About section
-│   ├── scene2.mp4          # Preview video for About section
-│   ├── scene3.mp4          # Preview video for About section
+│   ├── background.webp     # Homepage background(Original)
+│   ├── background2.webp    # Homepage background (Original)
+│   ├── background3.webp    # Notebook background (form Canvas) - used in index.html Instruction/Background sections
+│   ├── popup.webp          # Popup window graphic (form Canvas) - used in index.html Instruction/Background sections
+│   ├── scene1.mp4          # Preview video for About section (recored)
+│   ├── scene2.mp4          # Preview video for About section (recored)
+│   ├── scene3.mp4          # Preview video for About section (recored)
 │   └── favicon.webp        # Favicon
 └── main_image/             # Assets for main.html workspace
-    ├── background.webp     # Main workspace background
+    ├── background.webp     # Main workspace background(Original)
     ├── scene1.webp         # Device mockup 1 (Original)
     ├── scene1(2).webp      # Device mockup 1 hover state (Original)
     ├── scene2.webp         # Device mockup 2 (Original)
