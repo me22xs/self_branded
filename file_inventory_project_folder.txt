@@ -1,0 +1,55 @@
+Project File Inventory for 'self-branded'
+
+This document outlines the location of key files and assets within the project folder, particularly those referenced in the non-original components sheet.
+
+/ (Root Directory)
+├── index.html          # Main homepage file (Loads p5.js, Google Fonts)
+├── main.html           # Main interactive workspace (Loads Google Fonts, contains device mockups linking to scenes)
+├── entry.html          # Entry page before main workspace (Loads Google Fonts)
+├── storytelling.html   # Scene 1 Narrative (Loads p5.js, Scrollama, Font Awesome, Google Fonts, includes 2.2.mp4 animation)
+├── storytelling2.html  # Scene 2 Narrative (Loads Scrollama, p5.js, Google Fonts)
+├── storytelling3.html  # Scene 3 Narrative (Loads p5.js, Google Fonts)
+├── scene1/
+│   ├── instagram_original.html  # Scene 1 Interaction (Loads Bootstrap, Font Awesome, p5.js, Google Fonts)
+│   ├── instagram_converter.html # Scene 1 Interaction variation (Loads Bootstrap, Font Awesome, Remix Icon, p5.js, Google Fonts)
+│   ├── scene1_reflection.html   # Scene 1 Reflection page (Loads GSAP, Google Fonts)
+│   └── assets/
+│       ├── figure1.webp         # AI-generated image (Midjourney) - used in instagram_converter.html
+│       ├── figure2.webp         # AI-generated image (Midjourney) - used in instagram_original.html
+│       ├── background_.webp     # AI-generated image (Midjourney) - background for Scene 1 interactions
+│       ├── slider.MP3           # Audio effect (Pixabay)
+│       ├── menu-select.MP3      # Audio effect (Pixabay)
+│       ├── notification.MP3     # Audio effect (Pixabay)
+│       └── 2.2.mp4              # AI-generated animation (Tencent DreamVideo) - used in storytelling.html
+├── scene2/
+│   ├── Interaction.html       # Scene 2 Interaction (Loads p5.js, p5.sound, Remix Icon, Google Fonts, glitchEffect.js; contains OpenAI API call logic - backup only)
+│   ├── glitchEffect.js        # AI-assisted custom code for glitch effect
+│   ├── scene2_reflection.html   # Scene 2 Reflection page (Loads GSAP, Google Fonts)
+│   └── assets/
+│       ├── background8.webp     # AI-generated image (Midjourney) - background for Scene 2
+│       ├── *.webp               # Other potential AI/Canvas assets for Scene 2 narrative/reflection
+│       └── type.mp3             # Audio effect (Pixabay)
+├── scene3/
+│   ├── selfie.html            # Scene 3 Interaction (Loads p5.js, MediaPipe via CDN, landmarks.js, Google Fonts)
+│   ├── landmarks.js           # Based on MediaPipe definitions
+│   └── assets/
+│       ├── background.webp      # Background image for Scene 3
+│       └── camera-shutter.mp3   # Audio effect (Pixabay)
+├── gsap-public/            # GSAP library files (as downloaded)
+├── homepage_assets/        # Assets for index.html (backgrounds, favicon, videos etc.)
+│   ├── background.webp     # Homepage background
+│   ├── background2.webp    # Homepage background layer
+│   ├── background3.webp    # Notebook background (Canvas) - used in index.html Instruction/Background sections
+│   ├── popup.webp          # Popup window graphic (Canvas) - used in index.html Instruction/Background sections
+│   ├── scene1.mp4          # Preview video for About section
+│   ├── scene2.mp4          # Preview video for About section
+│   ├── scene3.mp4          # Preview video for About section
+│   └── favicon.webp        # Favicon
+└── main_image/             # Assets for main.html workspace
+    ├── background.webp     # Main workspace background
+    ├── scene1.webp         # Device mockup 1 (Original)
+    ├── scene1(2).webp      # Device mockup 1 hover state (Original)
+    ├── scene2.webp         # Device mockup 2 (Original)
+    ├── scene2(2).webp      # Device mockup 2 hover state (Original)
+    ├── scene3.webp         # Device mockup 3 (Original)
+    └── scene3(2).webp      # Device mockup 3 hover state (Original) 
