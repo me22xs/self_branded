@@ -1,4 +1,4 @@
-Project File Inventory for 'self_branded'
+Project File Inventory for 'self-branded'
 
 This document outlines the location of key files and assets within the project folder, particularly those referenced in the non-original components sheet.
 
@@ -39,12 +39,12 @@ This document outlines the location of key files and assets within the project f
 ├── homepage_assets/        # Assets for index.html (backgrounds, favicon, videos etc.)
 │   ├── background.webp     # Homepage background(Original)
 │   ├── background2.webp    # Homepage background (Original)
-│   ├── background3.webp    # Notebook background (form Canvas) - used in index.html Instruction/Background sections
-│   ├── popup.webp          # Popup window graphic (form Canvas) - used in index.html Instruction/Background sections
-│   ├── scene1.mp4          # Preview video for About section (recored)
-│   ├── scene2.mp4          # Preview video for About section (recored)
-│   ├── scene3.mp4          # Preview video for About section (recored)
-│   └── favicon.webp        # Favicon
+│   ├── background3.webp    # Notebook background (form Canva) - used in index.html Instruction/Background sections
+│   ├── popup.webp          # Popup window graphic (form Canva) - used in index.html Instruction/Background sections
+│   ├── scene1.mp4          # Preview video for About section (demo recored)
+│   ├── scene2.mp4          # Preview video for About section (demo recored)
+│   ├── scene3.mp4          # Preview video for About section (demo recored)
+│   └── favicon.webp        # Favicon(Original)
 └── main_image/             # Assets for main.html workspace
     ├── background.webp     # Main workspace background(Original)
     ├── scene1.webp         # Device mockup 1 (Original)
@@ -53,3 +53,5 @@ This document outlines the location of key files and assets within the project f
     ├── scene2(2).webp      # Device mockup 2 hover state (Original)
     ├── scene3.webp         # Device mockup 3 (Original)
     └── scene3(2).webp      # Device mockup 3 hover state (Original) 
+
+
